@@ -1,0 +1,184 @@
+#!/usr/bin/python2.5
+
+import sys
+import re
+
+from Foundation import *
+from PyObjCTools import AppHelper
+from AppKit import NSObject
+from AppKit import NSSpeechSynthesizer
+
+# Globals.
+# A debug file to place sample tts text sent by emacspeak.
+FILE = open("/users/dtseng/speech.log","w")
+#Punctation mode (none, some, all).
+punctuationMode = ["none"]
+# A queue of either text or audio filenames waiting to be dispatched to NSSpeechSynthesizer.
+speechQueue = []
+characterMap = {'a':['EY'], 'b':['b', 'IY']}
+
+class SpeechSynthesizerDelegate(NSObject):
+  def speechSynthesizer_didFinishSpeaking_(self, synthesizer, success):
+    processSpeechQueue()
+
+speechSynthesizer = NSSpeechSynthesizer.alloc().init()
+delegate_ = SpeechSynthesizerDelegate.alloc().init();
+speechSynthesizer.setRate_(500)
+speechSynthesizer.setDelegate_(delegate_)
+
+class FileObserver(NSObject):
+    def initWithFileDescriptor_readCallback_errorCallback_(self,
+            fileDescriptor, readCallback, errorCallback):
+        self = self.init()
+        self.reFilter = re.compile(r"\{.*?\}")
+        self.readCallback = readCallback
+        self.errorCallback = errorCallback
+        self.fileHandle = NSFileHandle.alloc().initWithFileDescriptor_(
+            fileDescriptor)
+        self.nc = NSNotificationCenter.defaultCenter()
+        self.nc.addObserver_selector_name_object_(
+            self,
+            'fileHandleReadCompleted:',
+            NSFileHandleReadCompletionNotification,
+            self.fileHandle)
+        self.fileHandle.readInBackgroundAndNotify()
+        return self
+
+    def fileHandleReadCompleted_(self, aNotification):
+        ui = aNotification.userInfo()
+        newData = ui.objectForKey_(NSFileHandleNotificationDataItem)
+        if newData is None:
+            if self.errorCallback is not None:
+                self.errorCallback(self, ui.objectForKey_(NSFileHandleError))
+            self.close()
+        else:
+            self.fileHandle.readInBackgroundAndNotify()
+            if self.readCallback is not None:
+                self.readCallback(self, str(newData))
+
+    def close(self):
+        self.nc.removeObserver_(self)
+        if self.fileHandle is not None:
+            self.fileHandle.closeFile()
+            self.fileHandle = None
+        # break cycles in case these functions are closed over
+        # an instance of us
+        self.readCallback = None
+        self.errorCallback = None
+
+    def __del__(self):
+        # Without this, if a notification fires after we are GC'ed
+        # then the app will crash because NSNotificationCenter
+        # doesn't retain observers.  In this example, it doesn't
+        # matter, but it's worth pointing out.
+        self.close()
+
+def prompt():
+    sys.stdout.write("write something: ")
+    sys.stdout.flush()
+
+def gotLine(observer, aLine):
+    if aLine:
+        writeDebugLog("\nraw: " + aLine.rstrip() +  "\nend\n")
+        dispatchTtsCommand(aLine.rstrip())
+    else:
+        print ""
+        AppHelper.stopEventLoop()
+
+def gotError(observer, err):
+    print "error:", err
+    AppHelper.stopEventLoop()
+
+def writeDebugLog(output):
+    if output:
+        FILE.write(output)
+    FILE.flush()
+
+def dispatchTtsCommand(input):
+    is_processing = False
+    chunks = input.split('\n')
+    for chunk in chunks:
+        writeDebugLog("\nchunk: " + chunk + "\nend\n")
+        if not chunk:
+            continue
+        if chunk.startswith("q "):
+            speechQueue.append(("text", chunk.replace("q", "", 1)))
+        #TODO:  support protocol commands.
+        if chunk =="d":
+        # sometimes we receive multiple dispatches within the same chunks set.
+            if not is_processing:
+                processSpeechQueue()
+                is_processing = True
+        if chunk == "s":
+            speechSynthesizer.stopSpeaking()
+            del(speechQueue[:])
+        #if chunk == "version":
+        #speak tts version
+        if chunk.startswith("tts_say"):
+            speechSynthesizer.startSpeakingString_(chunk.replace("tts_say ", "", 1).strip("{}"))
+        #TODO: investigate latency.
+        if chunk.startswith("l "):
+            speechSynthesizer.stopSpeaking()
+            output = chunk.replace("l ", "", 1).strip("{} ")
+            dispatchTtsCommand('s')
+            if output in characterMap:
+                for c in characterMap[output]:
+                    speechQueue.append(("text", "[[inpt phon]] " + c + " [[inpt text]]"))
+            else:
+                speechQueue.append(("text", output))
+            dispatchTtsCommand('d')
+        #if chunk == "tts_pause":
+        #if chunk == "tts_resume":
+        #if chunk.startswith"a "):
+        #queue the filename for playing.
+        #if chunk.startswith("t "):
+        #t freq length - play tone at freq and for length time (hz/ms).
+        #if chunk.startswith("sh "):
+        #silence for ms.
+
+        #setters
+        #if chunk == "tts_reset":
+        if chunk.startswith("tts_set_punctuations "):
+            punctuationMode[0] = chunk.replace("tts_set_punctuations ", "", 1)
+        #if chunk.startswith("tts_set_speech_rate ":
+#tts_set_character_scale factor (rate for spekaking chars)
+#tts_split_caps flag (speak camal case words).
+#tts_capitalize flag (beep on caps)
+#tts_allcaps_beep flag (beep)
+
+def processSpeechQueue():
+    if (len(speechQueue) > 0):
+        item = speechQueue.pop(0)
+        #Text
+        if item[0] == "text":
+            #Basic processing.  TODO: refactor.
+            output = item[1].strip(" {}")
+            if output:
+                print punctuationMode
+                if punctuationMode[0].startswith("all"):
+                    output = expandPunctuationToWords(output, False)
+                speechSynthesizer.startSpeakingString_(output)
+            writeDebugLog("\nsay: " + item[1] + "\nend\n")
+
+def expandPunctuationToWords(wordList, override):
+    # make more efficient.  (i.e. O(n) scan/replace).
+    # some
+    wordList = wordList.replace("-", " dash ")
+    wordList = wordList.replace("\"", " quote ")
+    wordList = wordList.replace("(", " leftParen ")
+    wordList = wordList.replace(")", " rightParen ")
+
+    # all (or override)
+    return wordList
+
+def main():
+    observer = FileObserver.alloc().initWithFileDescriptor_readCallback_errorCallback_(
+        sys.stdin.fileno(), gotLine, gotError)
+    try:
+        AppHelper.runConsoleEventLoop()
+    except KeyboardInterrupt:
+        writeDebugLog("\nKeyboard interrupt")
+
+if __name__ == '__main__':
+    main()
+    writeDebugLog("")
