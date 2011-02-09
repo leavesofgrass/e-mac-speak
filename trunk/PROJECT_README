@@ -1,0 +1,12 @@
+Welcome to E-Mac-Speak.
+
+
+This project is an attempt to unify efforts around making a stable port of Emacspeak for Mac OS X.  The ultimate goal is to contribute as much upstream as possible.
+
+Currently, we have a branch of Emacspeak TOT; there are minimal modifications to enable basic speaking.
+
+Remaining tasks:
+-  the lisp side needs some work (especially ironing out the
+personalities and ranges).
+-  the server side also needs some work as not all of the speech
+protocol's supported yet and not all edge cases are handled.
