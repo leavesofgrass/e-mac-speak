@@ -1,0 +1,8 @@
+* Bugs
+- The following string when read with c-e n ( emacspeak-speak-rest-of-buffer ) there is no speech output.  However when arrowing up and down over the line speaks correctly.
+
+* Missing features
+- No pitch change for capital leters
+- No audio icons
+- No tones
+- Punctuation modes do not change
