@@ -5,8 +5,10 @@
 - Sometimes the voiceification goes crazy and the pitch gets all out of wack.  Resetting with c-e c-s appears to fix it.
 
 * Missing features
-- No pitch change for capital leters
 - No audio icons
 - No tones
 - Punctuation modes do not change
 
+
+* Added features
+- Pitch change for capital letters
