@@ -13,7 +13,7 @@ from AppKit import NSSpeechSynthesizer
 
 # Globals.
 # A debug file to place sample tts text sent by emacspeak.
-FILE = open("/users/dtseng/speech.log","w")
+FILE = open("/tmp/speech.log","w")
 #punctuation mode (none, some, all).
 punctuationMode = ["none"]
 # A queue of either text or audio filenames waiting to be dispatched to NSSpeechSynthesizer.
