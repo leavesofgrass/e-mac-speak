@@ -12,11 +12,13 @@ from AppKit import NSObject
 from AppKit import NSSpeechSynthesizer
 
 # Globals.
+# amount to increase pitch of capital letters.  This may need tweaking. 
+capsPitchIncrease = 8
 # Debug level
 # 0 means no debug output is written 10 is maximum output
 debugLevel = 10
 # Should debug output also be written to STDOUT?
-debugToSTDOUT = 1
+debugToSTDOUT = 0
 # A debug file to place sample tts text sent by emacspeak.
 DEBUGFILE = open("/tmp/speech.log","w")
 #punctuation mode (none, some, all).
@@ -131,16 +133,34 @@ def dispatchTtsCommand(input):
                 processSpeechQueue()
                 is_processing = True
 
+        # Letter processing, this is for speaking an individual letter 
         #TODO: investigate latency.
         if chunk.startswith("l "):
             speechSynthesizer.stopSpeaking()
             output = chunk.replace("l ", "", 1).strip("{} ")
+
+            # Bart FIXME: setting the output to literal has undesired effects when phonemic pronounciation matches so have gone with initial empty strings for prefix and suffix but kept the below two lines just in case we change our minds.
+            #prefix = "[[char LTRL]]"
+            #suffix = "[[char NORM]]"
+            prefix = ""
+            suffix = ""
+
+            writeDebugLog(4, "Letter: " + output + "\n")
             dispatchTtsCommand('s')
+
+            # Check if this is a capital
+            if re.match(r"^[A-Z]+$", output):
+                prefix = prefix + " [[pbas +" + str(capsPitchIncrease) + "]]"
+                suffix = "[[pbas -" + str(capsPitchIncrease) + "]] " + suffix
+            # Check if we have a phonemic pronounciation for this letter in our characterMap
             if output in characterMap:
                 for c in characterMap[output]:
-                    speechQueue.append(("text", "[[inpt phon]] " + c + " [[inpt text]]"))
-            else:
-                speechQueue.append(("text", output))
+                    output = "[[inpt phon]] " + c + " [[inpt text]]"
+                    writeDebugLog(8, "characterMap match, output now: " + output + "\n")  
+
+            output = prefix + " " + output + " " + suffix
+            writeDebugLog(4, "about to speak letter: " + output + "\n")
+            speechQueue.append(("text", output))
             dispatchTtsCommand('d')
 
         if chunk.startswith("q "):
