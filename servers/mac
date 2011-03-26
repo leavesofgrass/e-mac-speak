@@ -23,6 +23,8 @@ debugToSTDOUT = 0
 DEBUGFILE = open("/tmp/speech.log","w")
 #punctuation mode (none, some, all).
 punctuationMode = ["none"]
+# used to pronounce punctuation chars
+punctuationMap= {'$':'dollar', '#':'pound'}
 # A queue of either text or audio filenames waiting to be dispatched to NSSpeechSynthesizer.
 speechQueue = []
 characterMap = {'a':['EY'], 'b':['b', 'IY']}
@@ -158,6 +160,12 @@ def dispatchTtsCommand(input):
                     output = "[[inpt phon]] " + c + " [[inpt text]]"
                     writeDebugLog(8, "characterMap match, output now: " + output + "\n")  
 
+            # punctuation processing
+            if output in punctuationMap:
+                output = punctuationMap[output]
+                writeDebugLog(8, "punctuationMap match, output now: " + output + "\n")  
+
+            # add prefix and suffix to output 
             output = prefix + " " + output + " " + suffix
             writeDebugLog(4, "about to speak letter: " + output + "\n")
             speechQueue.append(("text", output))
