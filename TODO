@@ -22,6 +22,9 @@ d
 - Sometimes the voicification goes crazy and the pitch gets all out of wack.  Resetting with c-e c-s appears to fix it.
 - Lines beginning with a cemicolon, probably other punct as well, introduce a pause before the line is spoken.  The result is to introduce latency when arrowing from line to line.
 
+- Upper case pitch adjustment needs to reset pitch for subsequent lower
+case letters. Perhaps the server needs to keep some state (i.e. current pitch).
+
 * Missing features
 - No audio icons
 - No tones

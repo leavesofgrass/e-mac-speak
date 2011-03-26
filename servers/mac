@@ -27,7 +27,6 @@ punctuationMode = ["none"]
 punctuationMap= {'$':'dollar', '#':'pound'}
 # A queue of either text or audio filenames waiting to be dispatched to NSSpeechSynthesizer.
 speechQueue = []
-characterMap = {'a':['EY'], 'b':['b', 'IY']}
 
 """
   Helper for consuming callbacks from NSSpeechSynthesizer.
@@ -154,11 +153,6 @@ def dispatchTtsCommand(input):
             if re.match(r"^[A-Z]+$", output):
                 prefix = prefix + " [[pbas +" + str(capsPitchIncrease) + "]]"
                 suffix = "[[pbas -" + str(capsPitchIncrease) + "]] " + suffix
-            # Check if we have a phonemic pronounciation for this letter in our characterMap
-            if output in characterMap:
-                for c in characterMap[output]:
-                    output = "[[inpt phon]] " + c + " [[inpt text]]"
-                    writeDebugLog(8, "characterMap match, output now: " + output + "\n")  
 
             # punctuation processing
             if output in punctuationMap:
