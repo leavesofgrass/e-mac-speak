@@ -1,5 +1,28 @@
 
 * Bugs
+
+- Sometimes chunks of text are lost.  Haven't been able to create a reproduceable case yet.
+- Sometimes the voicification goes crazy and the pitch gets all out of wack.  Resetting with c-e c-s appears to fix it.
+- Lines beginning with a cemicolon, probably other punct as well, introduce a pause before the line is spoken.  The result is to introduce latency when arrowing from line to line.
+
+- Upper case pitch adjustment needs to reset pitch for subsequent lower
+case letters. Perhaps the server needs to keep some state (i.e. current pitch).
+
+- Should just use a regex to extract out the command and args; would make
+ the individual protocol commands much more readable.
+(i.e. "^([a-z]*) {(\S\s*)
+Then, each protocol command could do its own argument parsing.
+
+- Decide which punctuation characters to include in none, some, and all levels.
+
+* Missing features
+- No audio icons
+- No tones
+- Punctuation modes do not change
+
+* fixed issues
+- No pitch change for capital letters
+- the dollar sign is silent.
 - The following output from emacspeak causes issues.
 When you send this text to the server it says nothing until you issue
    an additional d command:
@@ -16,20 +39,9 @@ q { [[rate 350]]  pound      [[rate 350]]
  }
 d
 ---- end ---
+Resolution: The first queue block "q {" is empty. We're therefore queuing
+a string containing "{".  We explicitly check for this now.
 
 - The lowercase letter  b is pronounced very strangely although the capital B is ok.  Remember some special caseing in the server which is probably already trying to deal with this.  Need to isolate when this happens, seams to be when arrowing over the letter or when typing, not when it is read as a single word in a sentence.
-- Sometimes chunks of text are lost.  Haven't been able to create a reproduceable case yet.
-- Sometimes the voicification goes crazy and the pitch gets all out of wack.  Resetting with c-e c-s appears to fix it.
-- Lines beginning with a cemicolon, probably other punct as well, introduce a pause before the line is spoken.  The result is to introduce latency when arrowing from line to line.
 
-- Upper case pitch adjustment needs to reset pitch for subsequent lower
-case letters. Perhaps the server needs to keep some state (i.e. current pitch).
-
-* Missing features
-- No audio icons
-- No tones
-- Punctuation modes do not change
-
-* fixed issues
-- No pitch change for capital letters
-- the dollar sign is silent.
+-Added more symbols to expand into human "readable" text "-, (, )".
