@@ -160,6 +160,11 @@ def dispatchTtsCommand(input):
             writeDebugLog(4, "Letter: " + output + "\n")
             dispatchTtsCommand('s')
 
+            # punctuation processing
+            if output in punctuationMap:
+                output = punctuationMap[output]
+                writeDebugLog(8, "punctuationMap match, output now: " + output + "\n")  
+
             # Check if this is a capital
             if re.match(r"^[A-Z]+$", output):
                 prefix = prefix + " [[pbas +" + str(capsPitchIncrease) + "]]"
@@ -168,8 +173,9 @@ def dispatchTtsCommand(input):
             # add prefix and suffix to output 
             output = prefix + " " + output + " " + suffix
             writeDebugLog(4, "about to speak letter: " + output + "\n")
-            speechQueue.append(("text", output))
-            dispatchTtsCommand('d')
+            # Send directly to TTS to avoid any line processing.
+            speechSynthesizer.startSpeakingString_(output)
+            
 
         if chunk.startswith("q "):
           chunk = chunk.replace("q {", "", 1)
