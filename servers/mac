@@ -21,10 +21,19 @@ debugLevel = 10
 debugToSTDOUT = 0
 # A debug file to place sample tts text sent by emacspeak.
 DEBUGFILE = open("/tmp/speech.log","w")
-#punctuation mode (none, some, all).
-punctuationMode = ["none"]
+
 # used to pronounce punctuation chars
-punctuationMap= {'$':'dollar', '#':'pound'}
+punctuationMap= {'$':'dollar',
+                 '#':'pound', 
+                 '-':'dash',
+                  '"':'quote',
+                   '(':'leftParen',
+                    ')':'rightParen',
+                 '\n':'new line'}
+
+# Possible levels of punctuation (none, some, all).
+punctuationLevel = "none"
+
 # A queue of either text or audio filenames waiting to be dispatched to NSSpeechSynthesizer.
 speechQueue = []
 
@@ -154,11 +163,6 @@ def dispatchTtsCommand(input):
                 prefix = prefix + " [[pbas +" + str(capsPitchIncrease) + "]]"
                 suffix = "[[pbas -" + str(capsPitchIncrease) + "]] " + suffix
 
-            # punctuation processing
-            if output in punctuationMap:
-                output = punctuationMap[output]
-                writeDebugLog(8, "punctuationMap match, output now: " + output + "\n")  
-
             # add prefix and suffix to output 
             output = prefix + " " + output + " " + suffix
             writeDebugLog(4, "about to speak letter: " + output + "\n")
@@ -166,7 +170,10 @@ def dispatchTtsCommand(input):
             dispatchTtsCommand('d')
 
         if chunk.startswith("q "):
-            speechQueue.append(("text", chunk.replace("q", "", 1)))
+          chunk = chunk.replace("q {", "", 1)
+          if chunk:
+            speechQueue.append(("text", chunk))
+
 
         if chunk == "s":
             speechSynthesizer.stopSpeaking()
@@ -189,10 +196,12 @@ def dispatchTtsCommand(input):
         #silence for ms.
 
         #setters
-        #if chunk == "tts_reset":
         if chunk.startswith("tts_set_punctuations "):
-            punctuationMode[0] = chunk.replace("tts_set_punctuations ", "", 1)
+          global punctuationLevel
+	  punctuationLevel = chunk.replace("tts_set_punctuations ", "", 1)
+          writeDebugLog(4, "Setting punctuation level: " +  punctuationLevel)
 
+        #if chunk == "tts_reset":
         #if chunk.startswith("tts_set_speech_rate ":
 #tts_set_character_scale factor (rate for spekaking chars)
 #tts_split_caps flag (speak camal case words).
@@ -212,22 +221,19 @@ def processSpeechQueue():
             #Basic processing.  TODO: refactor.
             output = item[1].strip(" {}")
             if output:
-                print punctuationMode
-                if punctuationMode[0].startswith("all"):
-                    output = expandPunctuationToWords(output, False)
+                print punctuationLevel
+                output = ProcessSpecialCharacters(output)
                 speechSynthesizer.startSpeakingString_(output)
             writeDebugLog(2, "\nsay: " + item[1] + "\nend\n")
 
-def expandPunctuationToWords(wordList, override):
-    # make more efficient.  (i.e. O(n) scan/replace).
-    # some
-    wordList = wordList.replace("-", " dash ")
-    wordList = wordList.replace("\"", " quote ")
-    wordList = wordList.replace("(", " leftParen ")
-    wordList = wordList.replace(")", " rightParen ")
-
-    # all (or override)
-    return wordList
+def ProcessSpecialCharacters(wordList):
+  expansion = ""
+  for i in range(len(wordList)):
+    if wordList[i] in punctuationMap:
+      expansion += ' ' + (punctuationMap[wordList[i]]) + ' '
+    else:
+      expansion += (wordList[i])
+  return expansion
 
 def main():
     observer = FileObserver.alloc().initWithFileDescriptor_readCallback_errorCallback_(
@@ -239,4 +245,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    writeDebugLog("")
