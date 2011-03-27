@@ -29,6 +29,8 @@ punctuationMap= {'$':'dollar',
                   '"':'quote',
                    '(':'leftParen',
                     ')':'rightParen',
+                 '<':'less than',
+                 '>':'greater than',
                  '\n':'new line'}
 
 # Possible levels of punctuation (none, some, all).
