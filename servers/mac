@@ -14,13 +14,19 @@ from AppKit import NSSpeechSynthesizer
 # Globals.
 # amount to increase pitch of capital letters.  This may need tweaking. 
 capsPitchIncrease = 8
+
 # Debug level
 # 0 means no debug output is written 10 is maximum output
 debugLevel = 10
+
 # Should debug output also be written to STDOUT?
 debugToSTDOUT = 0
+
 # A debug file to place sample tts text sent by emacspeak.
 DEBUGFILE = open("/tmp/speech.log","w")
+
+# Possible levels of punctuation (none, some, all).
+punctuationLevel = "none"
 
 # used to pronounce punctuation chars
 punctuationMap= {'$':'dollar',
@@ -32,9 +38,6 @@ punctuationMap= {'$':'dollar',
                  '<':'less than',
                  '>':'greater than',
                  '\n':'new line'}
-
-# Possible levels of punctuation (none, some, all).
-punctuationLevel = "none"
 
 # A queue of either text or audio filenames waiting to be dispatched to NSSpeechSynthesizer.
 speechQueue = []
@@ -66,6 +69,7 @@ class FileObserver(NSObject):
         self.fileHandle = NSFileHandle.alloc().initWithFileDescriptor_(
             fileDescriptor)
         self.nc = NSNotificationCenter.defaultCenter()
+        self.protocolHandler = ProtocolHandler()
         self.nc.addObserver_selector_name_object_(
             self,
             'fileHandleReadCompleted:',
@@ -107,6 +111,8 @@ class FileObserver(NSObject):
 def gotLine(observer, aLine):
     if aLine:
         writeDebugLog(2, "gotline: " + aLine.rstrip() +  "\nend\n")
+        # TODO: uncomment once finish transition.
+        #observer.protocolHandler.dispatchRawTtsMessage(aLine.rstrip())
         dispatchTtsCommand(aLine.rstrip())
     else:
         print ""
@@ -130,7 +136,59 @@ def writeDebugLog(level, output):
         DEBUGFILE.flush()
 
 
+# Object that implements the Emacspeak TTS protocol.
+# TODO: finish refactoring blocks from global dispatchTtsCommand.
+class ProtocolHandler:
+  def __init__(self):
+    # Maps a protocol id to a handler function.
+    # TODO: Add all implemented messages here.
+    self.protocolIdToHandlerMap = { 's':self.handleStopSpeaking }
+    # Used to extract protocol id and args from a raw message.
+    self.protocolRePattern = (
+      r"((?P<id_args>[a-z\-]*) {(?P<args>[\s\S]*))|(?P<id>[a-z]*)")
+
+  # Protocol Handlers.
+  def handleStopSpeaking(self, args):
+    speechSynthesizer.stopSpeaking()
+    del(speechQueue[:])
+
+  def dispatchRawTtsMessage(self, message):
+    chunks = message.split('\n')
+    for chunk in chunks:
+      writeDebugLog(4, "\nchunk: " + chunk + "\nend\n")                      
+      if not chunk:
+        continue
+
+      # Extract protocol id and protocol args.
+      matcher = re.match(self.protocolRePattern, chunk)
+
+      # Message validation.
+      if not matcher or ( 
+        len(matcher.groups()) != 4):
+        writeDebugLog(4, "Unable to parse pattern " + chunk)
+        continue
+
+      # Note the presence of two types of protocol messages:
+      # 1.  Non-empty id.
+      # 2. Non-empty id_args and args.
+      id = matcher.group('id')
+      id_args = matcher.group('id_args')
+      args = matcher.group('args')
+
+      # Send off to the handler.
+      if id and self.protocolIdToHandlerMap.has_key(id):
+        self.protocolIdToHandlerMap[id](args)
+      elif (
+        id_args and args and self.protocolIdToHandlerMap.has_key(id_args)):
+        self.protocolIdToHandlerMap[id](args)
+      else:
+        writeDebugLog(
+          4, "Error! unsupported message id:%s, id_args:%s, args:%s" % (
+          id, id_args, args))
+
+
 # Handles TTS protocol messages sent from emacspeak.
+# TODO: Remove once existing code refactored.
 def dispatchTtsCommand(input):
     is_processing = False
     chunks = input.split('\n')
@@ -139,6 +197,12 @@ def dispatchTtsCommand(input):
         if not chunk:
             continue
 
+        # Extract protocol id and protocol args.
+        """matcher = re.match(protocolRePattern, chunk)
+        if not matcher or (
+          len(matcher.groups()) != 1):
+                                      continue
+"""
         if chunk =="d":
         # sometimes we receive multiple dispatches within the same chunks set.
             if not is_processing:
@@ -148,7 +212,6 @@ def dispatchTtsCommand(input):
         # Letter processing, this is for speaking an individual letter 
         #TODO: investigate latency.
         if chunk.startswith("l "):
-            speechSynthesizer.stopSpeaking()
             output = chunk.replace("l ", "", 1).strip("{} ")
 
             # Bart FIXME: setting the output to literal has undesired effects when phonemic pronounciation matches so have gone with initial empty strings for prefix and suffix but kept the below two lines just in case we change our minds.
