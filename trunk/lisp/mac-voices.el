@@ -1,8 +1,8 @@
 ;;; mac-voices.el --- Define various device independent voices in terms of Mac tags
 ;;; $Id: mac-voices.el 6342 2009-10-20 19:12:40Z tv.raman.tv $
-;;; $Author: tv.raman.tv $
-;;; Description:  Module to set up Eloquent voices and personalities
-;;; Keywords: Voice, Personality, IBM ViaVoice Mac
+;;; $Author: Dave $
+;;; Description:  Module to set up Mac voices and personalities
+;;; Keywords: Voice, Personality, Mac
 ;;{{{  LCD Archive entry:
 
 ;;; LCD Archive Entry:
@@ -43,7 +43,7 @@
 ;;{{{  Introduction:
 
 ;;; This module defines the various voices used in voice-lock mode.
-;;; This module is IBM ViaVoice Mac specific.
+;;; This module is Apple Mac specific.
 
 ;;}}}
 ;;{{{ Required modules
@@ -446,7 +446,7 @@ and TABLE gives the values along that dimension."
 ;;{{{ Configurater 
 
 (defun mac-configure-tts ()
-  "Configure TTS environment to use ViaVoice  family of synthesizers."
+  "Configure TTS environment to use mac  family of synthesizers."
   (declare (special tts-default-speech-rate
                     mac-default-speech-rate
                     dtk-speaker-process))
