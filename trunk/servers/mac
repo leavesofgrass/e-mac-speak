@@ -39,6 +39,17 @@ punctuationMap= {'$':'dollar',
                  '>':'greater than',
                  '\n':'new line'}
 
+
+# map voice short names to apple class names.
+voiceMap= {'alex':'com.apple.speech.synthesis.voice.Alex',
+           'victoria':'com.apple.speech.synthesis.voice.Victoria',
+           'vicki':'com.apple.speech.synthesis.voice.Vicki',
+           'ralf':'com.apple.speech.synthesis.voice.Ralph',
+           'kathy':'com.apple.speech.synthesis.voice.Kathy',
+           'junior':'com.apple.speech.synthesis.voice.Junior',
+           'fred':'com.apple.speech.synthesis.voice.Fred',
+           'bruce':'com.apple.speech.synthesis.voice.Bruce'}
+
 # A queue of either text or audio filenames waiting to be dispatched to NSSpeechSynthesizer.
 speechQueue = []
 
