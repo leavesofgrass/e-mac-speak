@@ -164,6 +164,7 @@ class ProtocolHandler:
     del(speechQueue[:])
 
   def dispatchRawTtsMessage(self, message):
+    writeDebugLog(4, "dispatchRawTtsMessage")
     chunks = message.split('\n')
     for chunk in chunks:
       writeDebugLog(4, "\nchunk: " + chunk + "\nend\n")                      
@@ -201,10 +202,11 @@ class ProtocolHandler:
 # Handles TTS protocol messages sent from emacspeak.
 # TODO: Remove once existing code refactored.
 def dispatchTtsCommand(input):
+    writeDebugLog(4, "dispatchTtsCommand")
     is_processing = False
     chunks = input.split('\n')
     for chunk in chunks:
-        writeDebugLog(4, "\nchunk: " + chunk + "\nend\n")
+        writeDebugLog(4, "\nchunk: " + chunk + "\nend")
         if not chunk:
             continue
 
@@ -254,7 +256,10 @@ def dispatchTtsCommand(input):
         if chunk.startswith("q "):
           chunk = chunk.replace("q {", "", 1)
           if chunk:
-            speechQueue.append(("text", chunk))
+            if re.search(r"^(.*)(\[\[voice [a-z]*\]\])(.*)$", chunk):
+                queueTextWithVoiceCommands(chunk)
+            else:
+                speechQueue.append(("text", chunk))
 
 
         if chunk == "s":
@@ -290,6 +295,26 @@ def dispatchTtsCommand(input):
 #tts_capitalize flag (beep on caps)
 #tts_allcaps_beep flag (beep)
 
+
+# This takes a string with imbedded voice changes and splits it up and queues individual text events with voice changes inbetween.
+def queueTextWithVoiceCommands(text):
+    writeDebugLog(4, "process text with voice commands")
+    while text:
+        matcher = re.match(r"^(?P<first>.*?)\[\[voice (?P<voice>[a-z]*)\]\](?P<rest>.*)$", text)
+        if not matcher:
+            writeDebugLog(8, "no match in string " + text)
+            break
+        first = matcher.group('first')
+        voice = matcher.group('voice')
+        rest = matcher.group('rest')
+        speechQueue.append(("text", first))
+        speechQueue.append(("voice", voice))
+        writeDebugLog(8, "first: " + first + " voice " + voice + " rest " + rest)
+        text = rest
+    if text:
+        writeDebugLog(8, "queueing final chunk " + text)
+        speechQueue.append(("text", text))
+
 # Processes speech objects.
 # TODO: encapsulate speech objects as a class.  Currently, just an array.
 #  format is:
@@ -307,6 +332,13 @@ def processSpeechQueue():
                 output = ProcessSpecialCharacters(output)
                 speechSynthesizer.startSpeakingString_(output)
             writeDebugLog(2, "\nsay: " + item[1] + "\nend\n")
+        elif item[0] == "voice":
+            writeDebugLog(4, "Voice change")
+            voice = item[1]
+            if voice in voiceMap:
+                speechSynthesizer.setVoice_(voiceMap[voice])
+                writeDebugLog(6, "set voice to " + voiceMap[voice])  
+                processSpeechQueue()
 
 def ProcessSpecialCharacters(wordList):
   expansion = ""
