@@ -300,20 +300,24 @@ def dispatchTtsCommand(input):
 def queueTextWithVoiceCommands(text):
     writeDebugLog(4, "process text with voice commands")
     while text:
+        # try cleaning out the extra spaces
+        text = text.strip("{} ")
         matcher = re.match(r"^(?P<first>.*?)\[\[voice (?P<voice>[a-z]*)\]\](?P<rest>.*)$", text)
         if not matcher:
-            writeDebugLog(8, "no match in string " + text)
+            writeDebugLog(8, "no match in string " + text + "\n")
             break
         first = matcher.group('first')
         voice = matcher.group('voice')
         rest = matcher.group('rest')
-        speechQueue.append(("text", first))
+        if first:
+            speechQueue.append(("text", first))
         speechQueue.append(("voice", voice))
-        writeDebugLog(8, "first: " + first + " voice " + voice + " rest " + rest)
+        writeDebugLog(8, "first: " + first + "\nvoice " + voice + "\nrest " + rest)
         text = rest
     if text:
         writeDebugLog(8, "queueing final chunk " + text)
         speechQueue.append(("text", text))
+
 
 # Processes speech objects.
 # TODO: encapsulate speech objects as a class.  Currently, just an array.
