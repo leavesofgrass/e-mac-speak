@@ -56,8 +56,8 @@
 ;;}}}
 ;;{{{  voice table
 
-(defvar mac-default-voice-string ""
-  "Default Mac tag for  default voice --set to be a no-op.")
+(defvar mac-default-voice-string "[[voice alex]]"
+  "Default Mac tag for  default voice.")
 
 (defvar mac-voice-table (make-hash-table)
   "Association between symbols and strings to set Mac  voices.
@@ -95,15 +95,15 @@ COMMAND-STRING to the TTS engine."
 ;;{{{ voice definitions
 
 ;;; the nine predefined voices: TODO: figure out if embedding is possible (and update voice names).
-(mac-define-voice 'paul  "  ")
-(mac-define-voice 'harry " `v1 `vh65 `vb50 ")
-(mac-define-voice 'dennis " `v1  `vb0 ")
-(mac-define-voice 'frank " `v1 `vr100 ")
-(mac-define-voice 'betty " `v7 ")
-(mac-define-voice 'ursula " `v2 ")
-(mac-define-voice 'rita " `v2 `vr100 ")
-(mac-define-voice 'wendy " `v2 `vy50 ")
-(mac-define-voice 'kit " `v3 ")
+(mac-define-voice 'paul  " [[voice alex]] ")
+(mac-define-voice 'harry " [[voice ralf]] ")
+(mac-define-voice 'dennis " [[voice bruce]] ")
+(mac-define-voice 'frank " [[voice fred]] ")
+(mac-define-voice 'betty " [[voice victoria]] ")
+(mac-define-voice 'ursula " [[voice kathy]] ")
+(mac-define-voice 'rita " [[voice vicki]] ")
+(mac-define-voice 'wendy " [[voice kathy]] ")
+(mac-define-voice 'kit " [[voice junior]] ")
 
 ;;; Modified voices:
 
