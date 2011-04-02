@@ -74,7 +74,6 @@ class FileObserver(NSObject):
     def initWithFileDescriptor_readCallback_errorCallback_(self,
             fileDescriptor, readCallback, errorCallback):
         self = self.init()
-        self.reFilter = re.compile(r"\{.*?\}")
         self.readCallback = readCallback
         self.errorCallback = errorCallback
         self.fileHandle = NSFileHandle.alloc().initWithFileDescriptor_(
@@ -123,10 +122,9 @@ def gotLine(observer, aLine):
     if aLine:
         writeDebugLog(2, "gotline: " + aLine.rstrip() +  "\nend\n")
         # TODO: uncomment once finish transition.
-        #observer.protocolHandler.dispatchRawTtsMessage(aLine.rstrip())
-        dispatchTtsCommand(aLine.rstrip())
+        observer.protocolHandler.dispatchRawTtsMessage(aLine.rstrip())
+        #dispatchTtsCommand(aLine.rstrip())
     else:
-        print ""
         AppHelper.stopEventLoop()
 
 def gotError(observer, err):
@@ -153,17 +151,74 @@ class ProtocolHandler:
   def __init__(self):
     # Maps a protocol id to a handler function.
     # TODO: Add all implemented messages here.
-    self.protocolIdToHandlerMap = { 's':self.handleStopSpeaking }
+    self.protocolIdToHandlerMap = { 'd':self.handleDispatch,
+                                    'l':self.handleLetter,
+                                    'q':self.handleQueue,
+                                    's':self.handleStopSpeaking,
+                                    'tts_say':self.handleTtsSay,
+                                    'tts_set_punctuations':self.handleTtsSetPunctuations }
     # Used to extract protocol id and args from a raw message.
     self.protocolRePattern = (
-      r"((?P<id_args>[a-z\-]*) {(?P<args>[\s\S]*))|(?P<id>[a-z]*)")
+      r"((?P<blockId>[a-z\-]*) {(?P<blockArg>[\s\S]*))|((?P<spaceId>[a-z_]*) (?P<spaceArg>[\s\S]*))|(?P<id>[a-z_]*)")
+    # Used to detect multiple dispatches during processing of one chunk set.
+    self.isProcessing = False
 
   # Protocol Handlers.
+  def handleDispatch(self, args):
+    # sometimes we receive multiple dispatches within the same chunks set.
+    if not self.isProcessing:
+      processSpeechQueue()
+      self.isProcessing = True
+
+  def handleLetter(self, args):
+    # TODO: is this necessary?
+    output = args.strip(" ")
+
+    # Bart FIXME: setting the output to literal has undesired effects when phonemic pronounciation matches so have gone with initial empty strings for prefix and suffix but kept the below two lines just in case we change our minds.
+    #prefix = "[[char LTRL]]"
+    #suffix = "[[char NORM]]"
+    prefix = ""
+    suffix = ""
+
+    writeDebugLog(4, "Letter: " + output + "\n")
+    self.handleStopSpeaking(None)
+
+    # punctuation processing
+    if output in punctuationMap:
+      output = punctuationMap[output]
+      writeDebugLog(8, "punctuationMap match, output now: " + output + "\n")  
+
+    # Check if this is a capital
+    if re.match(r"^[A-Z]+$", output):
+      prefix = prefix + " [[pbas +" + str(capsPitchIncrease) + "]]"
+      suffix = "[[pbas -" + str(capsPitchIncrease) + "]] " + suffix
+
+    # add prefix and suffix to output 
+    output = prefix + " " + output + " " + suffix
+    writeDebugLog(4, "about to speak letter: " + output + "\n")
+    # Send directly to TTS to avoid any line processing.
+    speechSynthesizer.startSpeakingString_(output)
+
+  def handleQueue(self, args):
+    if args:
+      if re.search(r"^(.*)(\[\[voice [a-z]*\]\])(.*)$", args):
+        queueTextWithVoiceCommands(args)
+      else:
+        speechQueue.append(("text", args))
+
   def handleStopSpeaking(self, args):
     speechSynthesizer.stopSpeaking()
     del(speechQueue[:])
 
+  def handleTtsSay(self, args):
+    speechSynthesizer.startSpeakingString_(args)
+  def handleTtsSetPunctuations(self, args):
+    global punctuationLevel
+    punctuationLevel = args
+    writeDebugLog(4, "Setting punctuation level: " +  punctuationLevel)
+
   def dispatchRawTtsMessage(self, message):
+    self.isProcessing = False
     writeDebugLog(4, "dispatchRawTtsMessage")
     chunks = message.split('\n')
     for chunk in chunks:
@@ -176,27 +231,36 @@ class ProtocolHandler:
 
       # Message validation.
       if not matcher or ( 
-        len(matcher.groups()) != 4):
+        len(matcher.groups()) != 7):
         writeDebugLog(4, "Unable to parse pattern " + chunk)
         continue
 
-      # Note the presence of two types of protocol messages:
-      # 1.  Non-empty id.
-      # 2. Non-empty id_args and args.
+      # Note the presence of three types of protocol messages:
+      # 1. containing only id.
+      # 2. containing id and {...} block.
+      # 3. containing id and space delimited args.
       id = matcher.group('id')
-      id_args = matcher.group('id_args')
-      args = matcher.group('args')
+      blockId = matcher.group('blockId')
+      blockArg = matcher.group('blockArg')
+      spaceId = matcher.group('spaceId')
+      spaceArg = matcher.group('spaceArg')
 
       # Send off to the handler.
       if id and self.protocolIdToHandlerMap.has_key(id):
-        self.protocolIdToHandlerMap[id](args)
+        self.protocolIdToHandlerMap[id](None)
       elif (
-        id_args and args and self.protocolIdToHandlerMap.has_key(id_args)):
-        self.protocolIdToHandlerMap[id](args)
+        blockId and
+        blockArg and self.protocolIdToHandlerMap.has_key(blockId)):
+        self.protocolIdToHandlerMap[blockId](blockArg)
+      elif (
+        spaceId and
+        spaceArg and self.protocolIdToHandlerMap.has_key(spaceId)):
+        self.protocolIdToHandlerMap[spaceId](spaceArg)
       else:
+        print "unable to parse"
         writeDebugLog(
-          4, "Error! unsupported message id:%s, id_args:%s, args:%s" % (
-          id, id_args, args))
+          4, "Error! unsupported message id:%s, blockId:%s, blockArg:%s, spaceId:%s, spaceArg:%s" % (
+          id, blockId, blockArg, spaceId, spaceArg))
 
 
 # Handles TTS protocol messages sent from emacspeak.
