@@ -35,6 +35,9 @@ punctuationMap= {'$':'dollar',
                   '"':'quote',
                    '(':'leftParen',
                     ')':'rightParen',
+                 '*':'star',
+                 ';':'semi',
+                 ':':'colon',
                  '<':'less than',
                  '>':'greater than',
                  '\n':'new line'}
@@ -399,7 +402,9 @@ def processSpeechQueue():
                 print punctuationLevel
                 output = ProcessSpecialCharacters(output)
                 speechSynthesizer.startSpeakingString_(output)
-            writeDebugLog(2, "\nsay: " + item[1] + "\nend\n")
+                writeDebugLog(2, "\nsay: " + item[1] + "\nend\n")
+            else:
+                processSpeechQueue()
         elif item[0] == "voice":
             writeDebugLog(4, "Voice change")
             voice = item[1]
