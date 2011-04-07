@@ -177,8 +177,7 @@ class ProtocolHandler:
       self.isProcessing = True
 
   def handleLetter(self, args):
-    # TODO: is this necessary?
-    output = args.strip(" ")
+    output = args.strip(" }")
 
     # Bart FIXME: setting the output to literal has undesired effects when phonemic pronounciation matches so have gone with initial empty strings for prefix and suffix but kept the below two lines just in case we change our minds.
     #prefix = "[[char LTRL]]"
