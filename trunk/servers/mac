@@ -205,17 +205,16 @@ class ProtocolHandler:
     speechSynthesizer.startSpeakingString_(output)
 
   def handleQueue(self, args):
-    if args:
-      if re.search(r"^(.*)(\[\[voice [a-z]*\]\])(.*)$", args):
-        queueTextWithVoiceCommands(args)
+    if re.search(r"^(.*)(\[\[voice [a-z]*\]\])(.*)$", args):
+      queueTextWithVoiceCommands(args)
+    else:
+      self.queueContinuationValue = self.queueContinuationValue + args
+      if args.endswith('}'):
+        speechQueue.append(("text", self.queueContinuationValue))
+ 	self.queueContinuationValue = ""
+	self.isQueueContinuation = False
       else:
-        self.queueContinuationValue = self.queueContinuationValue + args
-        if args.endswith('}'):
-          speechQueue.append(("text", self.queueContinuationValue))
-	  self.queueContinuationValue = ""
-	  self.isQueueContinuation = False
-        else:
-          self.isQueueContinuation = True
+        self.isQueueContinuation = True
 
   def handleStopSpeaking(self, args):
     speechSynthesizer.stopSpeaking()
@@ -265,7 +264,7 @@ class ProtocolHandler:
         self.protocolIdToHandlerMap[id](None)
       elif (
         blockId and
-        blockArg and self.protocolIdToHandlerMap.has_key(blockId)):
+        self.protocolIdToHandlerMap.has_key(blockId)):
         self.protocolIdToHandlerMap[blockId](blockArg)
       elif (
         spaceId and
