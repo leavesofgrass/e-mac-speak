@@ -45,3 +45,36 @@ Then, each protocol command could do its own argument parsing.
 resolution:  added new class ProtocolHandler.
 
 - Fixed another "chunk loss" issue.  The issue had been that sometimes, we don't call processSpeechQueue when there are more items to be processed and idspatch had been called.  This is because we rely upon didFinishSpeaking from NSSpeechSynthesizer to be called; however, we don't always send items on the speech queue to the speech synth.
+
+Nice to have:
+-  rewrite the main parser of the raw TTS messages from emacspeak.
+Substitute the regex strategy with the below state machine.  This has the advantage of being closely aligned with how the commands are structured.  It also will allow us to perform punctuation to word expansions in the same pass through the raw content instead of doing it again  later on.
+
+set state = looking for command
+for each input character c:
+switch state:
+case state looking for command:
+c in [a-z_]: append c to currentCommand
+c is a new line: set state to terminal (argless command).
+c is a space and we have a handler for currentCommand: set state to
+generalCommand.
+
+case state generalCommand:
+c == {: set state to blockCommand
+c == " ", set state to spaceCommand.
+
+case state blockCommand:
+if c is "}", stop and set to terminal (block dispatch).
+otherwise, blockArgs.append(c).
+
+case in state spacecommand:
+c == new line, set state to terminal (space delimited).
+c == " ", add currentArg to spaceArgs
+otherwise, currentArgs.append(c)
+
+case state terminal:
+block: handler(blockId, blockArgs)
+spaceDelimited: handler(spaceId, spaceArgs)
+argless: handler(id)
+set state to looking for command
+
