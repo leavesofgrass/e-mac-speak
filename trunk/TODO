@@ -7,6 +7,7 @@
 - Upper case pitch adjustment needs to reset pitch for subsequent lower
 case letters. Perhaps the server needs to keep some state (i.e. current pitch).
 - Decide which punctuation characters to include in none, some, and all levels.
+- When large chunks of text are sent to the server it becomes unresponsive.  For example if you do a "svn log" in the shell for this project, things lock up for some time.
 
 * Missing features
 - No audio icons
