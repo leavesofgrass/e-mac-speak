@@ -46,7 +46,7 @@ resolution:  added new class ProtocolHandler.
 
 - Fixed another "chunk loss" issue.  The issue had been that sometimes, we don't call processSpeechQueue when there are more items to be processed and idspatch had been called.  This is because we rely upon didFinishSpeaking from NSSpeechSynthesizer to be called; however, we don't always send items on the speech queue to the speech synth.
 
-Nice to have:
+* Nice to have:
 -  rewrite the main parser of the raw TTS messages from emacspeak.
 Substitute the regex strategy with the below state machine.  This has the advantage of being closely aligned with how the commands are structured.  It also will allow us to perform punctuation to word expansions in the same pass through the raw content instead of doing it again  later on.
 
