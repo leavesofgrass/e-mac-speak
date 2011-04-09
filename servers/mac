@@ -147,7 +147,6 @@ def writeDebugLog(level, output):
 
 
 # Object that implements the Emacspeak TTS protocol.
-# TODO: finish refactoring blocks from global dispatchTtsCommand.
 class ProtocolHandler:
   def __init__(self):
     # Maps a protocol id to a handler function.
@@ -220,6 +219,7 @@ class ProtocolHandler:
 
   def handleTtsSay(self, args):
     speechSynthesizer.startSpeakingString_(args)
+
   def handleTtsSetPunctuations(self, args):
     global punctuationLevel
     punctuationLevel = args
