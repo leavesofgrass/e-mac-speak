@@ -125,7 +125,6 @@ def gotLine(observer, aLine):
     if aLine:
         writeDebugLog(2, "gotline: " + aLine.rstrip() +  "\nend\n")
         observer.protocolHandler.dispatchRawTtsMessage(aLine.rstrip())
-        #dispatchTtsCommand(aLine.rstrip())
     else:
         AppHelper.stopEventLoop()
 
