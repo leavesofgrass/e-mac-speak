@@ -124,7 +124,6 @@ class FileObserver(NSObject):
 def gotLine(observer, aLine):
     if aLine:
         writeDebugLog(2, "gotline: " + aLine.rstrip() +  "\nend\n")
-        # TODO: uncomment once finish transition.
         observer.protocolHandler.dispatchRawTtsMessage(aLine.rstrip())
         #dispatchTtsCommand(aLine.rstrip())
     else:
