@@ -10,7 +10,6 @@ case letters. Perhaps the server needs to keep some state (i.e. current pitch).
 - When large chunks of text are sent to the server it becomes unresponsive.  For example if you do a "svn log" in the shell for this project, things lock up for some time.
 
 * Missing features
-- No audio icons
 - No tones
 - Punctuation modes do not change
 
@@ -46,7 +45,8 @@ Then, each protocol command could do its own argument parsing.
 resolution:  added new class ProtocolHandler.
 
 - Fixed another "chunk loss" issue.  The issue had been that sometimes, we don't call processSpeechQueue when there are more items to be processed and idspatch had been called.  This is because we rely upon didFinishSpeaking from NSSpeechSynthesizer to be called; however, we don't always send items on the speech queue to the speech synth.
-
+- audio icons.  Note you need to set the following in your .emacs:
+(setq emacspeak-auditory-icon-function 'emacspeak-queue-auditory-icon)
 * Nice to have:
 -  rewrite the main parser of the raw TTS messages from emacspeak.
 Substitute the regex strategy with the below state machine.  This has the advantage of being closely aligned with how the commands are structured.  It also will allow us to perform punctuation to word expansions in the same pass through the raw content instead of doing it again  later on.
