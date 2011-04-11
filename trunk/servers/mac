@@ -21,13 +21,15 @@ capsPitchIncrease = 8
 debugLevel = 10
 
 # Should debug output also be written to STDOUT?
-debugToSTDOUT = 1
+debugToSTDOUT = 0
 
 # A debug file to place sample tts text sent by emacspeak.
 DEBUGFILE = open("/tmp/speech.log","w")
 
 # Possible levels of punctuation (none, some, all).
 punctuationLevel = "none"
+# global speech rate
+speechRate = 500
 
 # used to pronounce punctuation chars
 punctuationMap= {'$':'dollar',
@@ -66,7 +68,7 @@ class SpeechSynthesizerDelegate(NSObject):
 
 speechSynthesizer = NSSpeechSynthesizer.alloc().init()
 delegate_ = SpeechSynthesizerDelegate.alloc().init();
-speechSynthesizer.setRate_(500)
+speechSynthesizer.setRate_(speechRate)
 speechSynthesizer.setDelegate_(delegate_)
 
 """
@@ -158,6 +160,7 @@ class ProtocolHandler:
                                     'q':self.handleQueue,
                                     's':self.handleStopSpeaking,
                                     'tts_say':self.handleTtsSay,
+                                    'tts_sync_state':self.handleTtsSyncState,
                                     'tts_set_punctuations':self.handleTtsSetPunctuations }
     # Used to extract protocol id and args from a raw message.
     self.protocolRePattern = (
@@ -236,6 +239,15 @@ class ProtocolHandler:
     global punctuationLevel
     punctuationLevel = args
     writeDebugLog(4, "Setting punctuation level: " +  punctuationLevel)
+
+  def handleTtsSyncState(self, args):
+    params = args.split()
+    global punctuationLevel
+    punctuationLevel = params[0]
+    global speechRate
+    speechRate = int(params[4])
+    writeDebugLog(6, "tts_sync: set punctuation level to: " + punctuationLevel + " rate to: " + str(speechRate) + "\n")
+
 
   def dispatchRawTtsMessage(self, message):
     self.isProcessing = False
@@ -344,6 +356,7 @@ def processSpeechQueue():
             if output:
                 print punctuationLevel
                 output = ProcessSpecialCharacters(output)
+                speechSynthesizer.setRate_(speechRate)
                 speechSynthesizer.startSpeakingString_(output)
                 writeDebugLog(2, "\nsay: " + item[1] + "\nend\n")
             else:
