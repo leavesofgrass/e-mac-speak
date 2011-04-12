@@ -13,6 +13,8 @@ from AppKit import NSObject
 from AppKit import NSSpeechSynthesizer
 
 # Globals.
+ttsState = {}
+
 # amount to increase pitch of capital letters.  This may need tweaking. 
 capsPitchIncrease = 8
 
@@ -26,13 +28,14 @@ debugToSTDOUT = 0
 # A debug file to place sample tts text sent by emacspeak.
 DEBUGFILE = open("/tmp/speech.log","w")
 
-# Possible levels of punctuation (none, some, all).
-punctuationLevel = "none"
 # global speech rate
 speechRate = 500
 
+# Possible levels of punctuation (none, some, all).
+ttsState['punctuationLevel'] = 'none'
+
 # used to pronounce punctuation chars
-punctuationMap= {'$':'dollar',
+punctuationNamesMap= {'$':'dollar',
                  '#':'pound', 
                  '-':'dash',
                   '"':'quote',
@@ -43,8 +46,20 @@ punctuationMap= {'$':'dollar',
                  ':':'colon',
                  '<':'less than',
                  '>':'greater than',
-                 '\n':'new line'}
+                 '\n':'new line',
+                 '\\':'backslash',
+                 '/':'slash',
+		 '+':'plus',
+		 '=':'equals',
+		 '\'':'apostrophe',
+		 '~':'tilda',
+		 '`':'backquote',
+		 '.':'dot',
+		 ',':'comma'}
 
+punctuationMap = {'none': ('$'),
+                  'some': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '~', '`'),
+                  'all': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '\'', '~', '`', '.', ',')}
 
 # map voice short names to apple class names.
 voiceMap= {'alex':'com.apple.speech.synthesis.voice.Alex',
@@ -200,10 +215,10 @@ class ProtocolHandler:
     writeDebugLog(4, "Letter: " + output + "\n")
     self.handleStopSpeaking(None)
 
-    # punctuation processing
-    if output in punctuationMap:
-      output = punctuationMap[output]
-      writeDebugLog(8, "punctuationMap match, output now: " + output + "\n")  
+    # punctuation processing, we want to speak all punctuation if it is a single letter so just match against the punctuationNamesMap
+    if output in punctuationNamesMap:
+      output = punctuationNamesMap[output]
+      writeDebugLog(8, "punctuationNamesMap match, output now: " + output + "\n")  
 
     # Check if this is a capital
     if re.match(r"^[A-Z]+$", output):
@@ -236,18 +251,17 @@ class ProtocolHandler:
     speechSynthesizer.startSpeakingString_(args)
 
   def handleTtsSetPunctuations(self, args):
-    global punctuationLevel
-    punctuationLevel = args
-    writeDebugLog(4, "Setting punctuation level: " +  punctuationLevel)
+    global ttsState
+    ttsState['punctuationLevel'] = args.strip()
+    writeDebugLog(4, "Setting punctuation level: " +  ttsState['punctuationLevel'])
 
   def handleTtsSyncState(self, args):
     params = args.split()
-    global punctuationLevel
-    punctuationLevel = params[0]
+    global ttsState
+    ttsState['punctuationLevel'] = params[0]
     global speechRate
     speechRate = int(params[4])
-    writeDebugLog(6, "tts_sync: set punctuation level to: " + punctuationLevel + " rate to: " + str(speechRate) + "\n")
-
+    writeDebugLog(6, "tts_sync: set punctuation level to: " + ttsState['punctuationLevel'] + " rate to: " + str(speechRate) + "\n")
 
   def dispatchRawTtsMessage(self, message):
     self.isProcessing = False
@@ -354,7 +368,7 @@ def processSpeechQueue():
             #Basic processing.  TODO: refactor.
             output = item[1].strip(" {}")
             if output:
-                print punctuationLevel
+                print ttsState['punctuationLevel']
                 output = ProcessSpecialCharacters(output)
                 speechSynthesizer.setRate_(speechRate)
                 speechSynthesizer.startSpeakingString_(output)
@@ -369,11 +383,14 @@ def processSpeechQueue():
                 writeDebugLog(6, "set voice to " + voiceMap[voice])  
                 processSpeechQueue()
 
+
 def ProcessSpecialCharacters(wordList):
+  punctList = punctuationMap[ttsState['punctuationLevel']]
+
   expansion = ""
   for i in range(len(wordList)):
-    if wordList[i] in punctuationMap:
-      expansion += ' ' + (punctuationMap[wordList[i]]) + ' '
+    if wordList[i] in punctList:
+      expansion += ' ' + (punctuationNamesMap[wordList[i]]) + ' '
     else:
       expansion += (wordList[i])
   return expansion
