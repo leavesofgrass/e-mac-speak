@@ -32,7 +32,10 @@ debugToSTDOUT = 0
 DEBUGFILE = open("/tmp/speech.log","w")
 
 # global speech rate
-speechRate = 500
+ttsState['speechRate'] = 500
+
+# set capitalize to off initialy
+ttsState['capitalize'] = 0
 
 # Possible levels of punctuation (none, some, all).
 ttsState['punctuationLevel'] = 'none'
@@ -81,12 +84,25 @@ speechQueue = []
   Helper for consuming callbacks from NSSpeechSynthesizer.
 """
 class SpeechSynthesizerDelegate(NSObject):
+
   def speechSynthesizer_didFinishSpeaking_(self, synthesizer, success):
     processSpeechQueue()
 
+  def speechSynthesizer_didEncounterErrorAtIndex_ofString_message_(self, synthesizer, index, text, message):
+    #writeDebugLog(2, "error encountered in synth: " + message + " at index " + str(index) + " of string '" + text + "'\n")
+    writeDebugLog(2, "error encountered in synth: index " + str(index) + " of string '" + text + "'\n")
+
+  def speechSynthesizer_didEncounterSyncMessage_(self, synthesizer, message):
+    #writeDebugLog(2, "sync " + int(message) + "\n")
+    writeDebugLog(2, "sync\n")
+    # FIXME this must surely be wrong, how can we have this not enstanciate a new protocolhandler each time?
+    p = ProtocolHandler()
+    p.handleTone("500 30")
+
+
 speechSynthesizer = NSSpeechSynthesizer.alloc().init()
 delegate_ = SpeechSynthesizerDelegate.alloc().init();
-speechSynthesizer.setRate_(speechRate)
+speechSynthesizer.setRate_(ttsState['speechRate'])
 speechSynthesizer.setDelegate_(delegate_)
 
 """
@@ -285,9 +301,11 @@ class ProtocolHandler:
     params = args.split()
     global ttsState
     ttsState['punctuationLevel'] = params[0]
-    global speechRate
-    speechRate = int(params[4])
-    writeDebugLog(6, "tts_sync: set punctuation level to: " + ttsState['punctuationLevel'] + " rate to: " + str(speechRate) + "\n")
+    ttsState['capitalize'] = int(params[1])
+    ttsState['allCaps'] = int(params[2])
+    ttsState['splitCaps'] = int(params[3])
+    ttsState['speechRate'] = int(params[4])
+    writeDebugLog(6, "tts_sync: set punctuation level to: " + ttsState['punctuationLevel'] + " capitalize to " + str(ttsState['capitalize']) + " allcaps " + str(ttsState['allCaps']) + " splitCaps " + str(ttsState['splitCaps']) + " rate to: " + str(ttsState['speechRate']) + "\n")
 
   def dispatchRawTtsMessage(self, message):
     self.isProcessing = False
@@ -400,7 +418,7 @@ def processSpeechQueue():
             if output:
                 print ttsState['punctuationLevel']
                 output = ProcessSpecialCharacters(output)
-                speechSynthesizer.setRate_(speechRate)
+                speechSynthesizer.setRate_(ttsState['speechRate'])
                 speechSynthesizer.startSpeakingString_(output)
                 writeDebugLog(2, "\nsay: " + item[1] + "\nend\n")
             else:
@@ -422,6 +440,9 @@ def ProcessSpecialCharacters(wordList):
     if wordList[i] in punctList:
       expansion += ' ' + (punctuationNamesMap[wordList[i]]) + ' '
     else:
+      # if we have a cap letter
+      if ttsState['capitalize'] and re.match(r"^[A-Z]+$", wordList[i]):
+        expansion += "[[sync 3]]"
       expansion += (wordList[i])
   return expansion
 
