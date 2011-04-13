@@ -260,8 +260,9 @@ class ProtocolHandler:
       return
 
     frameRate = 44100
-    nframes = frameRate * length/1000.
-    frequencyWave = frequency / nframes
+    nframes = frameRate * length / 1000.
+    frequencyWave = 6.283185 * frequency / frameRate
+    # frequencyWave is measured in radians per sample
 
     e = aifc.open('/tmp/e.aiff', 'w')
     e.setnchannels(1)

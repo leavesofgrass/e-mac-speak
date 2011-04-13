@@ -12,7 +12,6 @@ case letters. Perhaps the server needs to keep some state (i.e. current pitch).
 
 * Missing features
 - No tones
-- Punctuation modes do not change
 
 * fixed issues
 - No pitch change for capital letters
@@ -38,19 +37,19 @@ a string containing "{".  We explicitly check for this now.
 
 - The lowercase letter  b is pronounced very strangely although the capital B is ok.  Remember some special caseing in the server which is probably already trying to deal with this.  Need to isolate when this happens, seams to be when arrowing over the letter or when typing, not when it is read as a single word in a sentence.
 -Added more symbols to expand into human "readable" text "-, (, )".
-
 - Should just use a regex to extract out the command and args; would make
  the individual protocol commands much more readable.
 (i.e. "^([a-z]*) {(\S\s*)
 Then, each protocol command could do its own argument parsing.
 resolution:  added new class ProtocolHandler.
-
 - Fixed another "chunk loss" issue.  The issue had been that sometimes, we don't call processSpeechQueue when there are more items to be processed and idspatch had been called.  This is because we rely upon didFinishSpeaking from NSSpeechSynthesizer to be called; however, we don't always send items on the speech queue to the speech synth.
 - audio icons.  Note you need to set the following in your .emacs:
 (setq emacspeak-auditory-icon-function 'emacspeak-queue-auditory-icon)
 - Rate is not always reset correctly.  To reproduce one way is to arrow up and down quickly in a dired listing, especially if the dir or file name is long.  It appears that if speech is interupted it then slows down.
  resolution: implement tts_sync_state and set speech rate before speech synthesis starts. 
- 
+- Punctuation modes do not change 
+resolution: Implemented punctuation levels.  We will still need to tune exactly what is included in each level.
+
 * Nice to have:
 -  rewrite the main parser of the raw TTS messages from emacspeak.
 Substitute the regex strategy with the below state machine.  This has the advantage of being closely aligned with how the commands are structured.  It also will allow us to perform punctuation to word expansions in the same pass through the raw content instead of doing it again  later on.
