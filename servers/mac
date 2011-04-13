@@ -200,7 +200,6 @@ class ProtocolHandler:
   # Play an auditory icon.
   # There may be a better way of doing this
   # Currently we play the icon as soon as we receive it which produces the best results.
-  # /usr/bin/afplay is hard coded and we put it in the background so as not to wait for the sound to complete before starting any speech 
   def handleAuditoryIcon(self, args):
     writeDebugLog(6, "Auditory icon " + args + "\n")
     if args:
@@ -353,10 +352,6 @@ class ProtocolHandler:
 
         #if chunk == "tts_pause":
         #if chunk == "tts_resume":
-        #if chunk.startswith"a "):
-        #queue the filename for playing.
-        #if chunk.startswith("t "):
-        #t freq length - play tone at freq and for length time (hz/ms).
         #if chunk.startswith("sh "):
         #silence for ms.
         #if chunk == "tts_reset":
