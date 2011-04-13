@@ -359,7 +359,7 @@ class ProtocolHandler:
   def buildSineWave(self, frequency, length):
     sinewave = bytearray()
     for i in range(length):
-      val = int(math.sin(i * frequency) * 30000)
+      val = int(math.sin(i * frequency) * 20000)
       sinewave.extend([(val >> 8) & 255, val & 255])
     return bytes(sinewave)
 
