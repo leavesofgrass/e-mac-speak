@@ -171,7 +171,6 @@ def writeDebugLog(level, output):
 class ProtocolHandler:
   def __init__(self):
     # Maps a protocol id to a handler function.
-    # TODO: Add all implemented messages here.
     self.protocolIdToHandlerMap = { 'd':self.handleDispatch,
                                     'a':self.handleAuditoryIcon,
                                     'l':self.handleLetter,
@@ -205,7 +204,7 @@ class ProtocolHandler:
   def handleAuditoryIcon(self, args):
     writeDebugLog(6, "Auditory icon " + args + "\n")
     if args:
-      os.system("/usr/bin/afplay " + args + "&")
+      NSSound.alloc().initWithContentsOfFile_byReference_(args, True).play()
 
   def handleLetter(self, args):
     output = args.strip(" }")
@@ -272,7 +271,7 @@ class ProtocolHandler:
     e.writeframesraw(self.buildSineWave(frequencyWave, int(nframes)))
     e.close()
 
-    icon = NSSound.alloc().initWithContentsOfFile_byReference_('/tmp/e.aiff', False)
+    icon = NSSound.alloc().initWithContentsOfFile_byReference_('/tmp/e.aiff', True)
     icon.play()
 
   def handleTtsSay(self, args):
