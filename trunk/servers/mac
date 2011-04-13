@@ -1,15 +1,18 @@
-#!/usr/bin/python2.5
+#!/usr/bin/python2.6
 # E-Mac-Speak
 # Emacspeak on Mac.
 # Initial contributer: David Tseng
 
-import sys
-import re
+import aifc
+import math
 import os
+import re
+import sys
 
 from Foundation import *
 from PyObjCTools import AppHelper
 from AppKit import NSObject
+from AppKit import NSSound
 from AppKit import NSSpeechSynthesizer
 
 # Globals.
@@ -174,6 +177,7 @@ class ProtocolHandler:
                                     'l':self.handleLetter,
                                     'q':self.handleQueue,
                                     's':self.handleStopSpeaking,
+				    't':self.handleTone,
                                     'tts_say':self.handleTtsSay,
                                     'tts_sync_state':self.handleTtsSyncState,
                                     'tts_set_punctuations':self.handleTtsSetPunctuations }
@@ -247,6 +251,29 @@ class ProtocolHandler:
     speechSynthesizer.stopSpeaking()
     del(speechQueue[:])
 
+  def handleTone(self, args):
+    frequency, length = args.split(' ')
+    frequency = int(frequency)
+    length = int(length)
+    if not frequency or not length:
+      writeDebugLog(4, 'Invalid tone args %i, %i' % (frequency, length))
+      return
+
+    frameRate = 44100
+    nframes = frameRate * length/1000.
+    frequencyWave = frequency / nframes
+
+    e = aifc.open('/tmp/e.aiff', 'w')
+    e.setnchannels(1)
+    e.setsampwidth(2)
+    e.setframerate(44100)
+    e.setnframes(int(nframes))
+    e.writeframesraw(self.buildSineWave(frequencyWave, int(nframes)))
+    e.close()
+
+    icon = NSSound.alloc().initWithContentsOfFile_byReference_('/tmp/e.aiff', False)
+    icon.play()
+
   def handleTtsSay(self, args):
     speechSynthesizer.startSpeakingString_(args)
 
@@ -312,6 +339,14 @@ class ProtocolHandler:
           4, "Error! unsupported message id:%s, blockId:%s, blockArg:%s, spaceId:%s, spaceArg:%s" % (
           id, blockId, blockArg, spaceId, spaceArg))
 
+  def buildSineWave(self, frequency, length):
+    sinewave = bytearray()
+    for i in range(length):
+      val = int(math.sin(i * frequency) * 30000)
+      sinewave.extend([(val >> 8) & 255, val & 255])
+    return bytes(sinewave)
+
+ 
         #TODO:  support protocol commands.
         #if chunk == "version":
         #speak tts version
