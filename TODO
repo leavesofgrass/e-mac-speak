@@ -11,7 +11,9 @@ case letters. Perhaps the server needs to keep some state (i.e. current pitch).
 
 
 * Missing features
-- No tones
+- all caps mode
+- split caps mode
+
 
 * fixed issues
 - No pitch change for capital letters
@@ -81,4 +83,6 @@ block: handler(blockId, blockArgs)
 spaceDelimited: handler(spaceId, spaceArgs)
 argless: handler(id)
 set state to looking for command
+- Tones are now implemented.
+- dtk-capitalize now works, toggle with c-e d c
 
