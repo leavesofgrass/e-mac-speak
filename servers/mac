@@ -453,6 +453,8 @@ def main():
         AppHelper.runConsoleEventLoop()
     except KeyboardInterrupt:
         writeDebugLog(2, "\nKeyboard interrupt")
-
+    except Exception, err:
+        writeDebugLog(2, "Server crashed:%s" % err)
+ 
 if __name__ == '__main__':
     main()
