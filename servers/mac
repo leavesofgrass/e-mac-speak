@@ -195,7 +195,9 @@ class ProtocolHandler:
 				    't':self.handleTone,
                                     'tts_say':self.handleTtsSay,
                                     'tts_sync_state':self.handleTtsSyncState,
-                                    'tts_set_punctuations':self.handleTtsSetPunctuations }
+                                    'tts_set_punctuations':self.handleTtsSetPunctuations,
+                                    'tts_set_speech_rate':self.handleTtsSetSpeechRate }
+
     # Used to extract protocol id and args from a raw message.
     self.protocolRePattern = (
       r"((?P<blockId>[a-z\-]*) {(?P<blockArg>[\s\S]*))|((?P<spaceId>[a-z_]*) (?P<spaceArg>[\s\S]*))|(?P<id>[a-z_]*)")
@@ -296,6 +298,10 @@ class ProtocolHandler:
     global ttsState
     ttsState['punctuationLevel'] = args.strip()
     writeDebugLog(4, "Setting punctuation level: " +  ttsState['punctuationLevel'])
+  def handleTtsSetSpeechRate(self, args):
+    global ttsState
+    ttsState['speechRate'] = int(args.strip())
+    writeDebugLog(4, "Setting speech rate: " +  str(ttsState['speechRate']))
 
   def handleTtsSyncState(self, args):
     params = args.split()
