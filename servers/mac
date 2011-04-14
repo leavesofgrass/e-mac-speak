@@ -33,7 +33,8 @@ DEBUGFILE = open("/tmp/speech.log","w")
 
 # global speech rate
 ttsState['speechRate'] = 500
-
+ttsState['charFactor'] = 1.8
+ttsState['sayRate'] = round(ttsState['speechRate'] * ttsState['charFactor'])
 # set capitalize to off initialy
 ttsState['capitalize'] = 0
 
@@ -196,7 +197,8 @@ class ProtocolHandler:
                                     'tts_say':self.handleTtsSay,
                                     'tts_sync_state':self.handleTtsSyncState,
                                     'tts_set_punctuations':self.handleTtsSetPunctuations,
-                                    'tts_set_speech_rate':self.handleTtsSetSpeechRate }
+                                    'tts_set_speech_rate':self.handleTtsSetSpeechRate,
+                                    'tts_set_character_scale':self.handleTtsSetCharacterScale }
 
     # Used to extract protocol id and args from a raw message.
     self.protocolRePattern = (
@@ -226,11 +228,8 @@ class ProtocolHandler:
   def handleLetter(self, args):
     output = args.strip(" }")
 
-    # Bart FIXME: setting the output to literal has undesired effects when phonemic pronounciation matches so have gone with initial empty strings for prefix and suffix but kept the below two lines just in case we change our minds.
-    #prefix = "[[char LTRL]]"
-    #suffix = "[[char NORM]]"
-    prefix = ""
-    suffix = ""
+    prefix = "[[rate " + str(ttsState['sayRate']) + "]]"
+    suffix = "[[rate " + str(ttsState['speechRate']) + "]]"
 
     writeDebugLog(4, "Letter: " + output + "\n")
     self.handleStopSpeaking(None)
@@ -301,7 +300,15 @@ class ProtocolHandler:
   def handleTtsSetSpeechRate(self, args):
     global ttsState
     ttsState['speechRate'] = int(args.strip())
-    writeDebugLog(4, "Setting speech rate: " +  str(ttsState['speechRate']))
+    ttsState['sayRate'] = round(ttsState['speechRate'] * ttsState['charFactor'])
+    writeDebugLog(4, "Setting speech rate: " +  str(ttsState['speechRate']) + " char factor: " + str(ttsState['charFactor']) + " say rate: " + str(ttsState['sayRate']) + "\n")
+
+  def handleTtsSetCharacterScale(self, args):
+    global ttsState
+    ttsState['charFactor'] = int(args.strip())
+    ttsState['sayRate'] = round(ttsState['speechRate'] * ttsState['charFactor'])
+    writeDebugLog(4, "Setting character scale: " + str(ttsState['charFactor']) + " say rate: " + str(ttsState['sayRate']) + "\n")
+
 
   def handleTtsSyncState(self, args):
     params = args.split()
