@@ -83,8 +83,8 @@ COMMAND-STRING to the TTS engine."
   "Retrieve command string for  voice NAME."
   (declare (special dtk-speech-rate))
   (concat 
-   (mac-get-voice-command-internal name)
-   (format " [[rate %s]] " dtk-speech-rate )))
+   (mac-get-voice-command-internal name)))
+;   (format " [[rate %s]] " dtk-speech-rate )))
 
 (defsubst mac-voice-defined-p (name)
   "Check if there is a voice named NAME defined."
