@@ -461,6 +461,7 @@ def ProcessSpecialCharacters(wordList):
   return expansion
 
 def main():
+    speechSynthesizer.startSpeakingString_("E Mac Speak server")
     observer = FileObserver.alloc().initWithFileDescriptor_readCallback_errorCallback_(
         sys.stdin.fileno(), gotLine, gotError)
     try:
