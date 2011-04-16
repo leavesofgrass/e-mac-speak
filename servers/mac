@@ -8,6 +8,7 @@ import math
 import os
 import re
 import sys
+import threading
 
 from Foundation import *
 from PyObjCTools import AppHelper
@@ -81,6 +82,9 @@ voiceMap= {'alex':'com.apple.speech.synthesis.voice.Alex',
 
 # A queue of either text or audio filenames waiting to be dispatched to NSSpeechSynthesizer.
 speechQueue = []
+
+# Lock access to specific speech synthesis paths.
+speechLock = threading.Lock()
 
 """
   Helper for consuming callbacks from NSSpeechSynthesizer.
@@ -438,11 +442,13 @@ Hack.  Sometimes, NSSpeechSynthesizerDelegate.didFinishSpeaking doesn't get
 called even though startSpeakingString succeeded.  
 Requeue the item in this case.
                 """
+                speechLock.acquire()
                 if speechSynthesizer.isSpeaking():
                   speechQueue.insert(0, item)
                 else:
                   speechSynthesizer.startSpeakingString_(output)
                   writeDebugLog(2, "\nsay: " + item[1] + "\nend\n")
+                speechLock.release()
             else:
                 processSpeechQueue()
         elif item[0] == "voice":
