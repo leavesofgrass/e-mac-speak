@@ -1,19 +1,14 @@
 
 * Bugs
-- Sometimes chunks of text are lost.  Haven't been able to create a reproduceable case yet.
 - Sometimes the voicification goes crazy and the pitch gets all out of wack.  Resetting with c-e c-s appears to fix it.
 - Lines beginning with a cemicolon, probably other punct as well, introduce a pause before the line is spoken.  The result is to introduce latency when arrowing from line to line.
-- issueing the emacspeak-speak-time command (bound to c-e t) quickly results in the year spoken again and again.  expected behaviour is that the currently speaking time is interupdated and speaking starts from the time again.  You need to hit this combo rather quickly again and again to see this.  Suspect this is exposing an underlieing  issue of some sort.
+- Decide which punctuation characters to include in none, some, and all levels.
 - Upper case pitch adjustment needs to reset pitch for subsequent lower
 case letters. Perhaps the server needs to keep some state (i.e. current pitch).
-- Decide which punctuation characters to include in none, some, and all levels.
-- When large chunks of text are sent to the server it becomes unresponsive.  For example if you do a "svn log" in the shell for this project, things lock up for some time.
-
 
 * Missing features
 - all caps mode
 - split caps mode
-
 
 * fixed issues
 - No pitch change for capital letters
@@ -85,4 +80,6 @@ argless: handler(id)
 set state to looking for command
 - Tones are now implemented.
 - dtk-capitalize now works, toggle with c-e d c
-
+- When large chunks of text are sent to the server it becomes unresponsive.  For example if you do a "svn log" in the shell for this project, things lock up for some time.
+- Sometimes chunks of text are lost.  Haven't been able to create a reproduceable case yet.
+- issueing the emacspeak-speak-time command (bound to c-e t) quickly results in the year spoken again and again.  expected behaviour is that the currently speaking time is interupdated and speaking starts from the time again.  You need to hit this combo rather quickly again and again to see this.  Suspect this is exposing an underlieing  issue of some sort.
