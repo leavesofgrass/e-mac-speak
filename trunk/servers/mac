@@ -427,6 +427,13 @@ def queueTextWithVoiceCommands(text):
 #  { type, value }
 #  this really should just be a proper class.
 def processSpeechQueue():
+    # hacky way to work around buggy NSSpeechSynthesizerDelegate
+    speechLock.acquire()
+    if speechSynthesizer.isSpeaking():
+        speechLock.release()
+	return
+    speechLock.release()
+
     if (len(speechQueue) > 0):
         item = speechQueue.pop(0)
         #Text
@@ -436,19 +443,8 @@ def processSpeechQueue():
             if output:
                 output = ProcessSpecialCharacters(output)
                 speechSynthesizer.setRate_(ttsState['speechRate'])
-
-                """
-Hack.  Sometimes, NSSpeechSynthesizerDelegate.didFinishSpeaking doesn't get 
-called even though startSpeakingString succeeded.  
-Requeue the item in this case.
-                """
-                speechLock.acquire()
-                if speechSynthesizer.isSpeaking():
-                  speechQueue.insert(0, item)
-                else:
-                  speechSynthesizer.startSpeakingString_(output)
-                  writeDebugLog(2, "\nsay: " + item[1] + "\nend\n")
-                speechLock.release()
+                speechSynthesizer.startSpeakingString_(output)
+                writeDebugLog(2, "\nsay: " + item[1] + "\nend\n")
             else:
                 processSpeechQueue()
         elif item[0] == "voice":
