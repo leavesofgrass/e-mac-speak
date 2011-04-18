@@ -310,7 +310,7 @@ class ProtocolHandler:
 
   def handleTtsSetCharacterScale(self, args):
     global ttsState
-    ttsState['charFactor'] = int(args.strip())
+    ttsState['charFactor'] = float(args.strip())
     ttsState['sayRate'] = round(ttsState['speechRate'] * ttsState['charFactor'])
     writeDebugLog(4, "Setting character scale: " + str(ttsState['charFactor']) + " say rate: " + str(ttsState['sayRate']) + "\n")
 
