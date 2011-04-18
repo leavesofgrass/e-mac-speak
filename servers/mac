@@ -296,7 +296,7 @@ class ProtocolHandler:
     icon.play()
 
   def handleTtsSay(self, args):
-    speechSynthesizer.startSpeakingString_(args)
+    speechSynthesizer.startSpeakingString_('[[rate %i]] %s' % (ttsState['sayRate'], args))
 
   def handleTtsSetPunctuations(self, args):
     global ttsState
