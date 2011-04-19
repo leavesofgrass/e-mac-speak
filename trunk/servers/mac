@@ -413,9 +413,9 @@ def queueTextWithVoiceCommands(text):
     speechQueue.append(("voice", voice))
     writeDebugLog(8, "first: " + first + "\nvoice " + voice + "\nrest " + rest)
     text = rest
-    if text:
-      writeDebugLog(8, "queueing final chunk " + text)
-      speechQueue.append(("text", text))
+  if text:
+    writeDebugLog(8, "queueing final chunk " + text)
+    speechQueue.append(("text", text))
 
 
 # Processes speech objects.
