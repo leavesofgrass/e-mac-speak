@@ -24,13 +24,14 @@ capsPitchIncrease = 8
 
 # Debug level
 # 0 means no debug output is written 10 is maximum output
-debugLevel = 10
+debugLevel = 0
 
 # Should debug output also be written to STDOUT?
 debugToSTDOUT = 0
 
 # A debug file to place sample tts text sent by emacspeak.
-DEBUGFILE = open("/tmp/speech.log","w")
+if debugLevel > 0:
+  DEBUGFILE = open("/tmp/speech.log","w")
 
 # global speech rate
 ttsState['speechRate'] = 500
@@ -46,9 +47,9 @@ ttsState['punctuationLevel'] = 'none'
 punctuationNamesMap= {'$':'dollar',
                  '#':'pound', 
                  '-':'dash',
-                  '"':'quote',
-                   '(':'leftParen',
-                    ')':'rightParen',
+                 '"':'quote',
+	         '(':'leftParen',
+                 ')':'rightParen',
                  '*':'star',
                  ';':'semi',
                  ':':'colon',
@@ -57,14 +58,14 @@ punctuationNamesMap= {'$':'dollar',
                  '\n':'new line',
                  '\\':'backslash',
                  '/':'slash',
-		 '+':'plus',
-		 '=':'equals',
-		 '\'':'apostrophe',
-		 '~':'tilda',
-		 '`':'backquote',
-		 '!':'exclamation',
-		 '.':'dot',
-		 ',':'comma'}
+                 '+':'plus',
+                 '=':'equals',
+                 '\'':'apostrophe',
+                 '~':'tilda',
+                 '`':'backquote',
+                 '!':'exclamation',
+                 '.':'dot',
+                 ',':'comma'}
 
 punctuationMap = {'none': ('$'),
                   'some': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '~', '`', '!'),
@@ -117,76 +118,76 @@ speechSynthesizer.setDelegate_(delegate_)
   NSNotificationCenter..
 """
 class FileObserver(NSObject):
-    def initWithFileDescriptor_readCallback_errorCallback_(self,
-            fileDescriptor, readCallback, errorCallback):
-        self = self.init()
-        self.readCallback = readCallback
-        self.errorCallback = errorCallback
-        self.fileHandle = NSFileHandle.alloc().initWithFileDescriptor_(
-            fileDescriptor)
-        self.nc = NSNotificationCenter.defaultCenter()
-        self.protocolHandler = ProtocolHandler()
-        self.nc.addObserver_selector_name_object_(
-            self,
-            'fileHandleReadCompleted:',
-            NSFileHandleReadCompletionNotification,
-            self.fileHandle)
-        self.fileHandle.readInBackgroundAndNotify()
-        return self
+  def initWithFileDescriptor_readCallback_errorCallback_(self,
+      fileDescriptor, readCallback, errorCallback):
+    self = self.init()
+    self.readCallback = readCallback
+    self.errorCallback = errorCallback
+    self.fileHandle = NSFileHandle.alloc().initWithFileDescriptor_(
+      fileDescriptor)
+    self.nc = NSNotificationCenter.defaultCenter()
+    self.protocolHandler = ProtocolHandler()
+    self.nc.addObserver_selector_name_object_(
+      self,
+      'fileHandleReadCompleted:',
+      NSFileHandleReadCompletionNotification,
+      self.fileHandle)
+    self.fileHandle.readInBackgroundAndNotify()
+    return self
 
-    def fileHandleReadCompleted_(self, aNotification):
-        ui = aNotification.userInfo()
-        newData = ui.objectForKey_(NSFileHandleNotificationDataItem)
-        if newData is None:
-            if self.errorCallback is not None:
-                self.errorCallback(self, ui.objectForKey_(NSFileHandleError))
-            self.close()
-        else:
-            self.fileHandle.readInBackgroundAndNotify()
-            if self.readCallback is not None:
-                self.readCallback(self, str(newData))
+  def fileHandleReadCompleted_(self, aNotification):
+    ui = aNotification.userInfo()
+    newData = ui.objectForKey_(NSFileHandleNotificationDataItem)
+    if newData is None:
+      if self.errorCallback is not None:
+        self.errorCallback(self, ui.objectForKey_(NSFileHandleError))
+      self.close()
+    else:
+      self.fileHandle.readInBackgroundAndNotify()
+      if self.readCallback is not None:
+        self.readCallback(self, str(newData))
 
-    def close(self):
-        self.nc.removeObserver_(self)
-        if self.fileHandle is not None:
-            self.fileHandle.closeFile()
-            self.fileHandle = None
-        # break cycles in case these functions are closed over
-        # an instance of us
-        self.readCallback = None
-        self.errorCallback = None
+  def close(self):
+    self.nc.removeObserver_(self)
+    if self.fileHandle is not None:
+      self.fileHandle.closeFile()
+      self.fileHandle = None
+    # break cycles in case these functions are closed over
+    # an instance of us
+    self.readCallback = None
+    self.errorCallback = None
 
-    def __del__(self):
-        # Without this, if a notification fires after we are GC'ed
-        # then the app will crash because NSNotificationCenter
-        # doesn't retain observers.  In this example, it doesn't
-        # matter, but it's worth pointing out.
-        self.close()
+  def __del__(self):
+    # Without this, if a notification fires after we are GC'ed
+    # then the app will crash because NSNotificationCenter
+    # doesn't retain observers.  In this example, it doesn't
+    # matter, but it's worth pointing out.
+    self.close()
 
 # This is conceptually the main entry point of the server.
 def gotLine(observer, aLine):
-    if aLine:
-        writeDebugLog(2, "gotline: " + aLine.rstrip() +  "\nend\n")
-        observer.protocolHandler.dispatchRawTtsMessage(aLine.rstrip())
-    else:
-        AppHelper.stopEventLoop()
-
-def gotError(observer, err):
-    print "error:", err
+  if aLine:
+    writeDebugLog(2, "gotline: " + aLine.rstrip() +  "\nend\n")
+    observer.protocolHandler.dispatchRawTtsMessage(aLine.rstrip())
+  else:
     AppHelper.stopEventLoop()
 
-def writeDebugLog(level, output):
-    # do nothing if debug is off
-    if debugLevel == 0:
-        return
+def gotError(observer, err):
+  print "error:", err
+  AppHelper.stopEventLoop()
 
-    if level <= debugLevel:
-        if output:
-            DEBUGFILE.write(output)
-            # Write debug messages to STDOUT if requested as well
-            if debugToSTDOUT:
-                print output + "\n"
-        DEBUGFILE.flush()
+def writeDebugLog(level, output):
+  # do nothing if debug is off
+  if debugLevel == 0:
+    return
+
+  if level <= debugLevel:
+    if output:
+      DEBUGFILE.write(output)
+      # Write debug messages to STDOUT if requested as well
+      if debugToSTDOUT:
+        print output + "\n"
+    DEBUGFILE.flush()
 
 
 # Object that implements the Emacspeak TTS protocol.
@@ -198,7 +199,7 @@ class ProtocolHandler:
                                     'l':self.handleLetter,
                                     'q':self.handleQueue,
                                     's':self.handleStopSpeaking,
-				    't':self.handleTone,
+                                    't':self.handleTone,
                                     'tts_say':self.handleTtsSay,
                                     'tts_sync_state':self.handleTtsSyncState,
                                     'tts_set_punctuations':self.handleTtsSetPunctuations,
@@ -262,8 +263,8 @@ class ProtocolHandler:
       self.queueContinuationValue = self.queueContinuationValue + args
       if args.endswith('}'):
         speechQueue.append(("text", self.queueContinuationValue))
- 	self.queueContinuationValue = ""
-	self.isQueueContinuation = False
+        self.queueContinuationValue = ""
+        self.isQueueContinuation = False
       else:
         self.isQueueContinuation = True
 
@@ -381,79 +382,72 @@ class ProtocolHandler:
       sinewave.extend([(val >> 8) & 255, val & 255])
     return bytes(sinewave)
 
- 
         #TODO:  support protocol commands.
-        #if chunk == "version":
+        #version":
         #speak tts version
 
-        #if chunk == "tts_pause":
-        #if chunk == "tts_resume":
-        #if chunk.startswith("sh "):
+        #tts_pause:
+        #if tts_resume:
+        #sh:
         #silence for ms.
-        #if chunk == "tts_reset":
-        #if chunk.startswith("tts_set_speech_rate ":
-#tts_set_character_scale factor (rate for spekaking chars)
-#tts_split_caps flag (speak camal case words).
-#tts_capitalize flag (beep on caps)
+        #tts__reset:
 #tts_allcaps_beep flag (beep)
 
 
 # This takes a string with imbedded voice changes and splits it up and queues individual text events with voice changes inbetween.
 def queueTextWithVoiceCommands(text):
-    writeDebugLog(4, "process text with voice commands")
-    while text:
-        # try cleaning out the extra spaces
-        text = text.strip("{} ")
-        matcher = re.match(r"^(?P<first>.*?)\[\[voice (?P<voice>[a-z]*)\]\](?P<rest>.*)$", text)
-        if not matcher:
-            writeDebugLog(8, "no match in string " + text + "\n")
-            break
-        first = matcher.group('first')
-        voice = matcher.group('voice')
-        rest = matcher.group('rest')
-        if first:
-            speechQueue.append(("text", first))
-        speechQueue.append(("voice", voice))
-        writeDebugLog(8, "first: " + first + "\nvoice " + voice + "\nrest " + rest)
-        text = rest
+  writeDebugLog(4, "process text with voice commands")
+  while text:
+    # try cleaning out the extra spaces
+    text = text.strip("{} ")
+    matcher = re.match(r"^(?P<first>.*?)\[\[voice (?P<voice>[a-z]*)\]\](?P<rest>.*)$", text)
+    if not matcher:
+      writeDebugLog(8, "no match in string " + text + "\n")
+      break
+    first = matcher.group('first')
+    voice = matcher.group('voice')
+    rest = matcher.group('rest')
+    if first:
+      speechQueue.append(("text", first))
+    speechQueue.append(("voice", voice))
+    writeDebugLog(8, "first: " + first + "\nvoice " + voice + "\nrest " + rest)
+    text = rest
     if text:
-        writeDebugLog(8, "queueing final chunk " + text)
-        speechQueue.append(("text", text))
+      writeDebugLog(8, "queueing final chunk " + text)
+      speechQueue.append(("text", text))
 
 
 # Processes speech objects.
-# TODO: encapsulate speech objects as a class.  Currently, just an array.
 #  format is:
 #  { type, value }
-#  this really should just be a proper class.
 def processSpeechQueue():
-    # hacky way to work around buggy NSSpeechSynthesizerDelegate
-    speechLock.acquire()
-    if speechSynthesizer.isSpeaking():
-        speechLock.release()
-	return
+  # hacky way to work around buggy NSSpeechSynthesizerDelegate
+  speechLock.acquire()
+  if speechSynthesizer.isSpeaking():
     speechLock.release()
+    return
+  speechLock.release()
 
-    if (len(speechQueue) > 0):
-        item = speechQueue.pop(0)
-        #Text
-        if item[0] == "text":
-            #Basic processing.  TODO: refactor.
-            output = item[1].strip(" {}")
-            if output:
-                output = ProcessSpecialCharacters(output)
-                speechSynthesizer.setRate_(ttsState['speechRate'])
-                speechSynthesizer.startSpeakingString_(output)
-                writeDebugLog(2, "\nsay: " + item[1] + "\nend\n")
-            else:
-                processSpeechQueue()
-        elif item[0] == "voice":
-            writeDebugLog(4, "Voice change")
-            voice = item[1]
-            if voice in voiceMap:
-                speechSynthesizer.setVoice_(voiceMap[voice])
-                writeDebugLog(6, "set voice to " + voiceMap[voice])  
-                processSpeechQueue()
+  if (len(speechQueue) > 0):
+    item = speechQueue.pop(0)
+    #Text
+    if item[0] == "text":
+      #Basic processing.  TODO: refactor.
+      output = item[1].strip(" {}")
+      if output:
+        output = ProcessSpecialCharacters(output)
+        speechSynthesizer.setRate_(ttsState['speechRate'])
+        speechSynthesizer.startSpeakingString_(output)
+        writeDebugLog(2, "\nsay: " + item[1] + "\nend\n")
+      else:
+        processSpeechQueue()
+    elif item[0] == "voice":
+      writeDebugLog(4, "Voice change")
+      voice = item[1]
+      if voice in voiceMap:
+        speechSynthesizer.setVoice_(voiceMap[voice])
+        writeDebugLog(6, "set voice to " + voiceMap[voice])  
+        processSpeechQueue()
 
 
 def ProcessSpecialCharacters(wordList):
@@ -471,15 +465,15 @@ def ProcessSpecialCharacters(wordList):
   return expansion
 
 def main():
-    speechSynthesizer.startSpeakingString_("E Mac Speak server")
-    observer = FileObserver.alloc().initWithFileDescriptor_readCallback_errorCallback_(
+  speechSynthesizer.startSpeakingString_("E Mac Speak server")
+  observer = FileObserver.alloc().initWithFileDescriptor_readCallback_errorCallback_(
         sys.stdin.fileno(), gotLine, gotError)
-    try:
-        AppHelper.runConsoleEventLoop()
-    except KeyboardInterrupt:
-        writeDebugLog(2, "\nKeyboard interrupt")
-    except Exception, err:
-        writeDebugLog(2, "Server crashed:%s" % err)
- 
+  try:
+    AppHelper.runConsoleEventLoop()
+  except KeyboardInterrupt:
+    writeDebugLog(2, "\nKeyboard interrupt")
+  except Exception, err:
+    writeDebugLog(2, "Server crashed:%s" % err)
+
 if __name__ == '__main__':
-    main()
+  main()
