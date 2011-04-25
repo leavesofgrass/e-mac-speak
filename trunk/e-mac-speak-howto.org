@@ -16,28 +16,31 @@ I welcome any updates to this document and or questions or issues found when fol
 
 
 
-The version of emacs shipped with snow leopard is not recent enough.  We will be installing emacs 24.
- 
+The version of emacs shipped with snow leopard (22.1) is not recent enough.  We will be installing emacs 24.  It also appears that the emacs shipped with snow leopard only runs in the terminal and not as a standalone app. 
 
 
 * XCODE4 
 To be able to build packages using homebrew you will need to have apple xcode installed.  If you are an apple developer it is a free download or can be purchased for around $5 from the mac appstore if you are not.
- 
+
+It can be installed from the mac app store.
+
+Here is a link to the relevant apple developer page:
 http://developer.apple.com/xcode/
 
 It is a rather large download of about 4 gig so may take some time to install depending on your Internet connection speed.
 
 * Homebrew
 
+Homebrew is a package management system for installing unix programs on mac.  You can read all about it at the below URL or the blog post sighted in the following text: 
 https://github.com/mxcl/homebrew
 
 These instructions are mostly taken from the blog post at:
 http://www.engineyard.com/blog/2010/homebrew-os-xs-missing-package-manager/
 
 
-From the terminal run the following commands.  I suggest that if you are at all worried checkout the script that is being run by the curl command so as to not install anything on your system that may be in any way suspicious  .
+To install homebrew, from the terminal run the following commands.  I suggest that if you are at all worried checkout the script that is being run by the curl command so as to not install anything on your system that may be in any way suspicious  .
 
-#I had to create the /usr/local directory on my mac which isn't in the blog post.
+#Note: I had to create the /usr/local directory on my mac which isn't in the blog post.
 # create /usr/local if it doesn't already exist
 sudo mkdir -p /usr/local
 # Take ownership of /usr/local so you don't have to sudo
@@ -47,11 +50,9 @@ sudo chown -R mysql:mysql /usr/local/mysql*
 # Download and install Homebrew from github
 curl -L http://github.com/mxcl/homebrew/tarball/master | tar xz --strip 1 -C /usr/local
 
-
-Once this is complete you should now have "brew" in your path.
+Once this is complete you should now have the "brew" program in your path.
 
 If typing "brew" at the terminal prompt gives a "command not found" error investigate if "/usr/local/bin" is in your PATH environment variable.
-
 
 If everything has worked up to this point typing "brew" should display an example usage message.
 
@@ -65,18 +66,43 @@ brew install git
 
 * Install emacs
 
-
 brew install emacs --HEAD --use-git-head --cocoa
 
-* Checkout emacspeak
+* Install emacspeak
 
-We will keep emacspeak in a directory
-
+We will keep emacspeak in a directory ~/src/emacspeak
+# create the ~/src dir if it doesn't exist
+mkdir -p ~/src
+# changedir to ~/src
+cd ~/src/emacspeak
+# checkout a copy of emacspeak from the google svn repository
 svn co http://emacspeak.googlecode.com/svn/trunk emacspeak
 
 
 * Test the e-mac-speak server
 
+Before trying to run emacspeak itself we need to verify that the e-mac-speak server is working.
+
+To do this, from the terminal:
+
+# Change to the emacspeak servers directory
+cd ~/src/emacspeak/servers
+# run the e-mac-speak server
+./mac
+
+At this point you should hear the words "emacspeak server" spoken.
+
+If not then we have a problem.
+
+To speak some text enter the following lines.
+
+q {This is a test.}
+d
+
+You should hear the words "This is a test."
+
+If all goes well move on to the next step.  If not troubleshoot the issue until the above steps work.
+ 
 * Emacs initialization
 
 To get emacs to start up loading emacspeak with the e-mac-speak server place the following in your .emacs.d/init.el file.
