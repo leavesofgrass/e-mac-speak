@@ -1,0 +1,87 @@
+* Introduction
+
+This document is a step by step guide showing how to configure emacspeak on a mac.  It includes installation of emacs, emacspeak and the e-mac-server.
+
+These instructions are only one way to achieve the end result of having emacspeak working on a mac.  This is the way I found worked best for me.  For example I have chosen to use "brew" to install emacs, I had no luck with the seemingly popular "macports".  Your mileage may vary.
+
+
+I have also made assumptions about file paths, feel free to put things where it feels most comfortable.  
+
+I welcome any updates to this document and or questions or issues found when following these instructions.
+
+* Prerequisites
+
+- A mac running a recent version of os x.  I used snow leopard 10.6.7.
+- An internet connection so we can download all the required bits.
+
+
+
+The version of emacs shipped with snow leopard is not recent enough.  We will be installing emacs 24.
+ 
+
+
+* XCODE4 
+To be able to build packages using homebrew you will need to have apple xcode installed.  If you are an apple developer it is a free download or can be purchased for around $5 from the mac appstore if you are not.
+ 
+http://developer.apple.com/xcode/
+
+It is a rather large download of about 4 gig so may take some time to install depending on your Internet connection speed.
+
+* Homebrew
+
+https://github.com/mxcl/homebrew
+
+These instructions are mostly taken from the blog post at:
+http://www.engineyard.com/blog/2010/homebrew-os-xs-missing-package-manager/
+
+
+From the terminal run the following commands.  I suggest that if you are at all worried checkout the script that is being run by the curl command so as to not install anything on your system that may be in any way suspicious  .
+
+#I had to create the /usr/local directory on my mac which isn't in the blog post.
+# create /usr/local if it doesn't already exist
+sudo mkdir -p /usr/local
+# Take ownership of /usr/local so you don't have to sudo
+sudo chown -R `whoami` /usr/local
+# Fix the permissions on your mysql installation, if you have one
+sudo chown -R mysql:mysql /usr/local/mysql*
+# Download and install Homebrew from github
+curl -L http://github.com/mxcl/homebrew/tarball/master | tar xz --strip 1 -C /usr/local
+
+
+Once this is complete you should now have "brew" in your path.
+
+If typing "brew" at the terminal prompt gives a "command not found" error investigate if "/usr/local/bin" is in your PATH environment variable.
+
+
+If everything has worked up to this point typing "brew" should display an example usage message.
+
+* Install git
+
+Next we will install git as it is required to be able to update homebrew itself as well as to install many homebrew formula.
+
+From the terminal:
+
+brew install git
+
+* Install emacs
+
+
+brew install emacs --HEAD --use-git-head --cocoa
+
+* Checkout emacspeak
+
+We will keep emacspeak in a directory
+
+svn co http://emacspeak.googlecode.com/svn/trunk emacspeak
+
+
+* Test the e-mac-speak server
+
+* Emacs initialization
+
+To get emacs to start up loading emacspeak with the e-mac-speak server place the following in your .emacs.d/init.el file.
+
+This is the minimum required to ensure that emacspeak comes up talking.  You will want to investigate further customizations of both emacs and emacspeak as you progress.
+
+A good place to look for emacspeak customizations is in the "tvr" directory of the emacspeak source.  This is Raman's emacs customizations.
+
