@@ -1,13 +1,15 @@
 #!/usr/bin/python2.6
 # E-Mac-Speak
 # Emacspeak on Mac.
-# Initial contributer: David Tseng
+# author: David Tseng
+# author: Bart Bunting
 
 import aifc
 import math
 import os
 import re
 import sys
+import tempfile
 import threading
 
 from Foundation import *
@@ -31,7 +33,9 @@ debugToSTDOUT = 0
 
 # A debug file to place sample tts text sent by emacspeak.
 if debugLevel > 0:
-  DEBUGFILE = open("/tmp/speech.log","w")
+  DEBUGFILE = tempfile.NamedTemporaryFile(dir='/tmp',
+                                          mode='w',
+                                          prefix='emacspeak.servers.mac_log')
 
 # global speech rate
 ttsState['speechRate'] = 500
@@ -65,12 +69,13 @@ punctuationNamesMap= {'$':'dollar',
                  '`':'backquote',
                  '!':'exclamation',
                  '@':'at',
+                 '_':'underline',
                  '.':'dot',
                  ',':'comma'}
 
 punctuationMap = {'none': ('$'),
                   'some': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '~', '`', '!'),
-                  'all': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '\'', '~', '`', '!', '@', '.', ',')}
+                  'all': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '\'', '~', '`', '!', '@', '_', '.', ',')}
 
 # map voice short names to apple class names.
 voiceMap= {'alex':'com.apple.speech.synthesis.voice.Alex',
@@ -88,6 +93,7 @@ speechQueue = []
 # Lock access to specific speech synthesis paths.
 speechLock = threading.Lock()
 
+
 """
   Helper for consuming callbacks from NSSpeechSynthesizer.
 """
@@ -103,11 +109,10 @@ class SpeechSynthesizerDelegate(NSObject):
   def speechSynthesizer_didEncounterSyncMessage_(self, synthesizer, message):
     #writeDebugLog(2, "sync " + int(message) + "\n")
     writeDebugLog(2, "sync\n")
-    # FIXME this must surely be wrong, how can we have this not enstanciate a new protocolhandler each time?
     p = ProtocolHandler()
     p.handleTone("500 30")
 
-
+# Static.
 speechSynthesizer = NSSpeechSynthesizer.alloc().init()
 delegate_ = SpeechSynthesizerDelegate.alloc().init();
 speechSynthesizer.setRate_(ttsState['speechRate'])
@@ -116,7 +121,7 @@ speechSynthesizer.setDelegate_(delegate_)
 """
   An object which observes stdin.
   This class largely contains basic i/o for reading from stdin using
-  NSNotificationCenter..
+  NSNotificationCenter.
 """
 class FileObserver(NSObject):
   def initWithFileDescriptor_readCallback_errorCallback_(self,
@@ -192,7 +197,11 @@ def writeDebugLog(level, output):
 
 
 # Object that implements the Emacspeak TTS protocol.
-class ProtocolHandler:
+class _ProtocolHandler:
+  # Enables singleton behavior.
+  def __call__(self):
+    return self
+
   def __init__(self):
     # Maps a protocol id to a handler function.
     self.protocolIdToHandlerMap = { 'd':self.handleDispatch,
@@ -394,8 +403,11 @@ class ProtocolHandler:
         #tts__reset:
 #tts_allcaps_beep flag (beep)
 
+# Static.
+ProtocolHandler = _ProtocolHandler()
 
-# This takes a string with imbedded voice changes and splits it up and queues individual text events with voice changes inbetween.
+
+# This takes a string with embedded voice changes and splits it up and queues individual text events with voice changes inbetween.
 def queueTextWithVoiceCommands(text):
   writeDebugLog(4, "process text with voice commands")
   while text:
@@ -453,16 +465,33 @@ def processSpeechQueue():
 
 def ProcessSpecialCharacters(wordList):
   punctList = punctuationMap[ttsState['punctuationLevel']]
+  # used to track if we are currently inside an embedded command.
+  inEmbeddedCommand = 0
 
   expansion = ""
   for i in range(len(wordList)):
+    # Check if we are entering an embedded command
+    if wordList[i] == '[' and wordList[i - 1] == '[':
+      inEmbeddedCommand = 1
+    # Check if we are leaving an embedded command
+    if wordList[i] == ']' and wordList[i - 1] == ']':
+      inEmbeddedCommand = 0
+
+    # if we are in an embedded command then just send the char straight through with out processing
+    if inEmbeddedCommand:
+      expansion += (wordList[i])
+      continue
+
+    # Check if we have an expansion for this char
     if wordList[i] in punctList:
       expansion += ' ' + (punctuationNamesMap[wordList[i]]) + ' '
-    else:
-      # if we have a cap letter
-      if ttsState['capitalize'] and re.match(r"^[A-Z]+$", wordList[i]):
-        expansion += "[[sync 3]]"
-      expansion += (wordList[i])
+      continue
+
+    # if we have a cap letter
+    if ttsState['capitalize'] and re.match(r"^[A-Z]+$", wordList[i]):
+      expansion += "[[sync 3]]"
+    expansion += (wordList[i])
+
   return expansion
 
 def main():
@@ -478,3 +507,7 @@ def main():
 
 if __name__ == '__main__':
   main()
+
+# local variables:
+# mode: python
+# end:
