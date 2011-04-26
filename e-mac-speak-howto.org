@@ -29,6 +29,7 @@ http://developer.apple.com/xcode/
 
 It is a rather large download of about 4 gig so may take some time to install depending on your Internet connection speed.
 
+
 * Homebrew
 
 Homebrew is a package management system for installing unix programs on mac.  You can read all about it at the below URL or the blog post sighted in the following text: 
@@ -66,7 +67,23 @@ brew install git
 
 * Install emacs
 
+This installs the current development branch of emacs24 from  repo.or.cz.
+
+It may be possible to use other emacson such as aquamax or other distributions specifically for the mac.  I had no luck doing so and this was the way that worked for me.
+
+If anyone else is using a different emacs I would love to hear about it so I can add aditional install options here.
+
+To install using brew, issue the following command from the terminal: 
 brew install emacs --HEAD --use-git-head --cocoa
+
+You will need to have added /usr/local/bin to the beginning of your PATH environment variable otherwise the shell will find the apple supplied version of emacs.
+
+You can check this has worked by issueing the following command at the terminal:
+
+which emacs
+
+It should report /usr/local/bin/emacs 
+
 
 * Install emacspeak
 
@@ -74,9 +91,13 @@ We will keep emacspeak in a directory ~/src/emacspeak
 # create the ~/src dir if it doesn't exist
 mkdir -p ~/src
 # changedir to ~/src
-cd ~/src/emacspeak
+cd ~/src
 # checkout a copy of emacspeak from the google svn repository
 svn co http://emacspeak.googlecode.com/svn/trunk emacspeak
+
+cd emacspeak
+make config
+make emacspeak
 
 
 * Test the e-mac-speak server
@@ -111,3 +132,5 @@ This is the minimum required to ensure that emacspeak comes up talking.  You wil
 
 A good place to look for emacspeak customizations is in the "tvr" directory of the emacspeak source.  This is Raman's emacs customizations.
 
+
+fixme
