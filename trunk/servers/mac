@@ -8,6 +8,7 @@ import aifc
 import math
 import os
 import re
+import StringIO
 import sys
 import tempfile
 import threading
@@ -26,10 +27,10 @@ capsPitchIncrease = 8
 
 # Debug level
 # 0 means no debug output is written 10 is maximum output
-debugLevel = 0
+debugLevel = 10
 
 # Should debug output also be written to STDOUT?
-debugToSTDOUT = 0
+debugToSTDOUT = 1
 
 # A debug file to place sample tts text sent by emacspeak.
 if debugLevel > 0:
@@ -295,7 +296,8 @@ class _ProtocolHandler:
     frequencyWave = 2 * math.pi * frequency / frameRate
     # frequencyWave is measured in radians per sample
 
-    e = aifc.open('/tmp/e.aiff', 'w')
+    f = StringIO.StringIO()
+    e = aifc.open(f, 'w')
     e.setnchannels(1)
     e.setsampwidth(2)
     e.setframerate(44100)
@@ -303,7 +305,9 @@ class _ProtocolHandler:
     e.writeframesraw(self.buildSineWave(frequencyWave, int(nframes)))
     e.close()
 
-    icon = NSSound.alloc().initWithContentsOfFile_byReference_('/tmp/e.aiff', True)
+    soundData = NSData.alloc().initWithBytes_length_(f.getvalue(),
+                                                           len(f.getvalue()))
+    icon = NSSound.alloc().initWithData_(soundData)
     icon.play()
 
   def handleTtsSay(self, args):
