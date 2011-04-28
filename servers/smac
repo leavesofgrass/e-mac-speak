@@ -4,6 +4,7 @@
 # author: David Tseng
 # author: Bart Bunting
 
+import time
 import aifc
 import math
 import os
@@ -23,6 +24,9 @@ from AppKit import NSSpeechSynthesizer
 
 # flag to tell us if we have generated a text clip but not played it
 unplayedTextClip = 0
+textClipFileName = "/tmp/textclip.aif"
+soxClipFileName = "/tmp/soxclip.aif"
+
 
 
 # Globals.
@@ -101,6 +105,18 @@ speechQueue = []
 
 # Lock access to specific speech synthesis paths.
 speechLock = threading.Lock()
+
+
+"""
+  Helper for consuming callbacks from NSSound.
+"""
+class SoundDelegate(NSObject):
+
+  def sound_didFinishPlaying_(self, synthesizer, success):
+    processSpeechQueue()
+
+
+soundDelegate_ = SoundDelegate.alloc().init();
 
 
 """
@@ -486,14 +502,29 @@ def queueTextWithSoxCommands(text):
 #  { type, value }
 def processSpeechQueue():
   global unplayedTextClip
-
+  global sounddelegate
   # hacky way to work around buggy NSSpeechSynthesizerDelegate
   speechLock.acquire()
   if speechSynthesizer.isSpeaking():
     speechLock.release()
     return
   if unplayedTextClip:
-    NSSound.alloc().initWithContentsOfFile_byReference_("/tmp/textclip.aif", True).play()
+    textclip = pysox.CSoxStream("/tmp/textclip.aif")
+	#create an audio file with the same parameters as the input file
+    out = pysox.CSoxStream('/tmp/soxclip.aif', 'w', textclip.get_signal())
+    #create an effects chain using the signal and encoding parameters of our files
+    chain = pysox.CEffectsChain(textclip, out)
+    #chain.add_effect(pysox.CEffect("vol",[b'18db']))
+    chain.add_effect(pysox.CEffect("echo",[b'0.8', '0.88', '60', '0.4']))
+    chain.flow_effects()
+    #cleanup
+    textclip.close()
+    out.close()
+    #time.sleep(1)
+    sound = NSSound.alloc().initWithContentsOfFile_byReference_("/tmp/soxclip.aif", False)
+    sound.setDelegate_(soundDelegate_)
+    sound.play()
+    print "finished sound\n"
     unplayedTextClip = 0
     speechLock.release()
     return
@@ -517,7 +548,7 @@ def processSpeechQueue():
       if output:
         output = ProcessSpecialCharacters(output)
         speechSynthesizer.setRate_(ttsState['speechRate'])
-        textClipFileName = "/tmp/textclip.aif"
+
         textClipFile = NSURL.alloc().initFileURLWithPath_(textClipFileName)
         speechSynthesizer.startSpeakingString_toURL_(output, textClipFile)
         #NSSound.alloc().initWithContentsOfFile_byReference_(textClipFileName, True).play()
