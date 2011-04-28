@@ -20,6 +20,11 @@ from AppKit import NSObject
 from AppKit import NSSound
 from AppKit import NSSpeechSynthesizer
 
+
+# flag to tell us if we have generated a text clip but not played it
+unplayedTextClip = 0
+
+
 # Globals.
 ttsState = {}
 
@@ -480,11 +485,20 @@ def queueTextWithSoxCommands(text):
 #  format is:
 #  { type, value }
 def processSpeechQueue():
+  global unplayedTextClip
+
   # hacky way to work around buggy NSSpeechSynthesizerDelegate
   speechLock.acquire()
   if speechSynthesizer.isSpeaking():
     speechLock.release()
     return
+  if unplayedTextClip:
+    NSSound.alloc().initWithContentsOfFile_byReference_("/tmp/textclip.aif", True).play()
+    unplayedTextClip = 0
+    speechLock.release()
+    return
+
+
   speechLock.release()
 
   if (len(speechQueue) > 0):
@@ -506,7 +520,8 @@ def processSpeechQueue():
         textClipFileName = "/tmp/textclip.aif"
         textClipFile = NSURL.alloc().initFileURLWithPath_(textClipFileName)
         speechSynthesizer.startSpeakingString_toURL_(output, textClipFile)
-        NSSound.alloc().initWithContentsOfFile_byReference_(textClipFileName, True).play()
+        #NSSound.alloc().initWithContentsOfFile_byReference_(textClipFileName, True).play()
+        unplayedTextClip = 1
         writeDebugLog(2, "\ntextclip played: " + item[1] + "\nend\n")
       else:
         processSpeechQueue()
