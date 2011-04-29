@@ -46,7 +46,7 @@ debugToSTDOUT = 1
 if debugLevel > 0:
   DEBUGFILE = tempfile.NamedTemporaryFile(dir='/tmp',
                                           mode='w',
-                                          prefix='emacspeak.servers.mac_log')
+                                          prefix='dmac.servers.mac_log')
 
 
 
@@ -112,7 +112,7 @@ speechLock = threading.Lock()
 """
 class TextClipPlayerDelegate(NSObject):
 
-  def sound_didFinishPlaying_(self, synthesizer, success):
+  def sound_didFinishPlaying_(self, textClipPlayer, success):
     processSpeechQueue()
 
 textClipPlayer = NSSound.alloc()
@@ -298,7 +298,7 @@ class _ProtocolHandler:
     else:
       self.queueContinuationValue = self.queueContinuationValue + args
       if args.endswith('}'):
-        speechQueue.append(("text", self.queueContinuationValue))
+        speechQueue.append(('textclip', self.queueContinuationValue))
         self.queueContinuationValue = ""
         self.isQueueContinuation = False
       else:
@@ -313,7 +313,7 @@ class _ProtocolHandler:
     else:
       self.queueContinuationValue = self.queueContinuationValue + args
       if args.endswith('}'):
-        speechQueue.append(("textclip", self.queueContinuationValue))
+        speechQueue.append(('textclip', self.queueContinuationValue))
         self.queueContinuationValue = ""
         self.isQueueContinuation = False
       else:
@@ -321,6 +321,7 @@ class _ProtocolHandler:
 
   def handleStopSpeaking(self, args):
     speechSynthesizer.stopSpeaking()
+    textClipPlayer.stop()
     del(speechQueue[:])
 
   def handleTone(self, args):
@@ -465,13 +466,13 @@ def queueTextWithVoiceCommands(text):
     voice = matcher.group('voice')
     rest = matcher.group('rest')
     if first:
-      speechQueue.append(("text", first))
-    speechQueue.append(("voice", voice))
+      speechQueue.append(("textclip", first))
+    speechQueue.append(('voice', voice))
     writeDebugLog(8, "first: " + first + "\nvoice " + voice + "\nrest " + rest)
     text = rest
   if text:
     writeDebugLog(8, "queueing final chunk " + text)
-    speechQueue.append(("text", text))
+    speechQueue.append(('textclip', text))
 
 
 
@@ -488,13 +489,13 @@ def queueTextWithSoxCommands(text):
     voice = matcher.group('voice')
     rest = matcher.group('rest')
     if first:
-      speechQueue.append(("text", first))
-    speechQueue.append(("voice", voice))
+      speechQueue.append(('text', first))
+    speechQueue.append(('voice', voice))
     writeDebugLog(8, "first: " + first + "\nvoice " + voice + "\nrest " + rest)
     text = rest
   if text:
     writeDebugLog(8, "queueing final chunk " + text)
-    speechQueue.append(("text", text))
+    speechQueue.append(('text', text))
 
 
 # Processes speech objects.
@@ -505,30 +506,9 @@ def processSpeechQueue():
   global sounddelegate
   # hacky way to work around buggy NSSpeechSynthesizerDelegate
   speechLock.acquire()
-  if speechSynthesizer.isSpeaking():
+  if speechSynthesizer.isSpeaking() or textClipPlayer.isPlaying():
     speechLock.release()
     return
-  if unplayedTextClip:
-    textclip = pysox.CSoxStream("/tmp/textclip.aif")
-	##create an audio file with the same parameters as the input file
-    #out = pysox.CSoxStream('/tmp/soxclip.aif', 'w', textclip.get_signal())
-    ##create an effects chain using the signal and encoding parameters of our files
-    #chain = pysox.CEffectsChain(textclip, out)
-    ##chain.add_effect(pysox.CEffect("vol",[b'18db']))
-    #chain.add_effect(pysox.CEffect("echo",[b'0.8', '0.88', '60', '0.4']))
-    #chain.flow_effects()
-    ##cleanup
-    #textclip.close()
-    #out.close()
-    ##time.sleep(1)
-    textClipPlayer.initWithContentsOfFile_byReference_("/tmp/textclip.aif", False)
-    textClipPlayer.play()
-
-    unplayedTextClip = 0
-    speechLock.release()
-    return
-
-
   speechLock.release()
 
   if (len(speechQueue) > 0):
@@ -550,11 +530,12 @@ def processSpeechQueue():
 
         textClipFile = NSURL.alloc().initFileURLWithPath_(textClipFileName)
         speechSynthesizer.startSpeakingString_toURL_(output, textClipFile)
-        #NSSound.alloc().initWithContentsOfFile_byReference_(textClipFileName, True).play()
-        unplayedTextClip = 1
-        writeDebugLog(2, "\ntextclip played: " + item[1] + "\nend\n")
+        speechQueue.append(('playclip', ''))
       else:
         processSpeechQueue()
+    elif item[0] == "playclip":
+      textClipPlayer.initWithContentsOfFile_byReference_("/tmp/textclip.aif", False)
+      textClipPlayer.play()
     elif item[0] == "voice":
       writeDebugLog(4, "Voice change")
       voice = item[1]
