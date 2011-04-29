@@ -110,14 +110,14 @@ speechLock = threading.Lock()
 """
   Helper for consuming callbacks from NSSound.
 """
-class SoundDelegate(NSObject):
+class TextClipPlayerDelegate(NSObject):
 
   def sound_didFinishPlaying_(self, synthesizer, success):
     processSpeechQueue()
 
-sound = NSSound.alloc()
-soundDelegate_ = SoundDelegate.alloc().init();
-sound.setDelegate_(soundDelegate_)
+textClipPlayer = NSSound.alloc()
+textClipPlayerDelegate_ = TextClipPlayerDelegate.alloc().init();
+textClipPlayer.setDelegate_(textClipPlayerDelegate_)
 
 """
   Helper for consuming callbacks from NSSpeechSynthesizer.
@@ -521,9 +521,9 @@ def processSpeechQueue():
     #textclip.close()
     #out.close()
     ##time.sleep(1)
-    sound.initWithContentsOfFile_byReference_("/tmp/textclip.aif", False)
-    sound.play()
-    print "finished sound\n"
+    textClipPlayer.initWithContentsOfFile_byReference_("/tmp/textclip.aif", False)
+    textClipPlayer.play()
+
     unplayedTextClip = 0
     speechLock.release()
     return
