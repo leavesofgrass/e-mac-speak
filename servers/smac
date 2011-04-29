@@ -115,9 +115,9 @@ class SoundDelegate(NSObject):
   def sound_didFinishPlaying_(self, synthesizer, success):
     processSpeechQueue()
 
-
+sound = NSSound.alloc()
 soundDelegate_ = SoundDelegate.alloc().init();
-
+sound.setDelegate_(soundDelegate_)
 
 """
   Helper for consuming callbacks from NSSpeechSynthesizer.
@@ -510,19 +510,18 @@ def processSpeechQueue():
     return
   if unplayedTextClip:
     textclip = pysox.CSoxStream("/tmp/textclip.aif")
-	#create an audio file with the same parameters as the input file
-    out = pysox.CSoxStream('/tmp/soxclip.aif', 'w', textclip.get_signal())
-    #create an effects chain using the signal and encoding parameters of our files
-    chain = pysox.CEffectsChain(textclip, out)
-    #chain.add_effect(pysox.CEffect("vol",[b'18db']))
-    chain.add_effect(pysox.CEffect("echo",[b'0.8', '0.88', '60', '0.4']))
-    chain.flow_effects()
-    #cleanup
-    textclip.close()
-    out.close()
-    #time.sleep(1)
-    sound = NSSound.alloc().initWithContentsOfFile_byReference_("/tmp/soxclip.aif", False)
-    sound.setDelegate_(soundDelegate_)
+	##create an audio file with the same parameters as the input file
+    #out = pysox.CSoxStream('/tmp/soxclip.aif', 'w', textclip.get_signal())
+    ##create an effects chain using the signal and encoding parameters of our files
+    #chain = pysox.CEffectsChain(textclip, out)
+    ##chain.add_effect(pysox.CEffect("vol",[b'18db']))
+    #chain.add_effect(pysox.CEffect("echo",[b'0.8', '0.88', '60', '0.4']))
+    #chain.flow_effects()
+    ##cleanup
+    #textclip.close()
+    #out.close()
+    ##time.sleep(1)
+    sound.initWithContentsOfFile_byReference_("/tmp/textclip.aif", False)
     sound.play()
     print "finished sound\n"
     unplayedTextClip = 0
