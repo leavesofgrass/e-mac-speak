@@ -530,7 +530,7 @@ def processSpeechQueue():
 
         textClipFile = NSURL.alloc().initFileURLWithPath_(textClipFileName)
         speechSynthesizer.startSpeakingString_toURL_(output, textClipFile)
-        speechQueue.append(('playclip', ''))
+        speechQueue.insert(0, ('playclip', ''))
       else:
         processSpeechQueue()
     elif item[0] == "playclip":
