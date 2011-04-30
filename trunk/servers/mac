@@ -303,12 +303,12 @@ class _ProtocolHandler:
     e.setframerate(44100)
     e.setnframes(int(nframes))
     e.writeframesraw(self.buildSineWave(frequencyWave, int(nframes)))
-    e.close()
 
     soundData = NSData.alloc().initWithBytes_length_(f.getvalue(),
                                                            len(f.getvalue()))
     icon = NSSound.alloc().initWithData_(soundData)
     icon.play()
+    e.close()
 
   def handleTtsSay(self, args):
     speechSynthesizer.startSpeakingString_('[[rate %i]] %s' % (ttsState['sayRate'], args))
