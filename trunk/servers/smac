@@ -227,7 +227,6 @@ class _ProtocolHandler:
     self.protocolIdToHandlerMap = { 'd':self.handleDispatch,
                                     'a':self.handleAuditoryIcon,
                                     'l':self.handleLetter,
-                                    'x':self.handleQueueTextClip,
                                     'q':self.handleQueue,
                                     's':self.handleStopSpeaking,
                                     't':self.handleTone,
@@ -287,32 +286,113 @@ class _ProtocolHandler:
     # Send directly to TTS to avoid any line processing.
     speechSynthesizer.startSpeakingString_(output)
 
-  def handleQueue(self, args):
-    if re.search(r"^(.*)(\[\[voice [a-z]*\]\])(.*)$", args):
-      queueTextWithVoiceCommands(args)
-    else:
-      self.queueContinuationValue = self.queueContinuationValue + args
-      if args.endswith('}'):
-        speechQueue.append(('textclip', self.queueContinuationValue))
-        self.queueContinuationValue = ""
-        self.isQueueContinuation = False
-      else:
-        self.isQueueContinuation = True
+  # This function takes a string to queue and tokenizes it into text and embedded commands
+  def tokenizeQueue(self, args):
+    q = []
+    text = ""
+    command = ""
+    inEmbeddedCommand = 0
 
-# experimental sox queueing
-# really only for testing at the server prompt by hand for now.
-# use x instead of q
-  def handleQueueTextClip(self, args):
-    if re.search(r"^(.*)(\[\[sox [a-z]*\]\])(.*)$", args):
-      queueTextWithSoxCommands(args)
-    else:
-      self.queueContinuationValue = self.queueContinuationValue + args
-      if args.endswith('}'):
-        speechQueue.append(('textclip', self.queueContinuationValue))
-        self.queueContinuationValue = ""
-        self.isQueueContinuation = False
+    # Pass 1.  Tokenize into text and commands.
+    for i in range(len(args)):
+      # Check if we are entering an embedded command
+      if args[i] == '[' and args[i - 1] == '[':
+        inEmbeddedCommand = 1
+        text = text.strip("[] ")
+        if text:
+          print "entering embedded command text is %s\n" % text
+          q.append(("text", text))
+          text = ""
+      # Check if we are leaving an embedded command
+      if args[i] == ']' and args[i - 1] == ']':
+        inEmbeddedCommand = 0
+        print "left embedded command %s\n" % command
+        q.append(("cmd", command.strip("[] ")))
+        command = ""
+      # if we are in an embedded command then accumulate the command
+      if inEmbeddedCommand:
+        command += (args[i])
+        continue
       else:
-        self.isQueueContinuation = True
+        text += (args[i])
+        continue
+
+    # clean up what ever is left note that the tests are reversed here
+    if inEmbeddedCommand:
+      q.append(("cmd", command.strip("[] ")))
+    else:
+      text = text.strip("[] ")
+      if text:
+        q.append(("text", text))
+    return q
+
+
+  def handleQueue(self, args):
+    q = []
+    # First break the queued text into a queue of text and embedded commands.
+    tokens = self.tokenizeQueue(args)
+    print "exiting handlequeue %s\n" % tokens
+
+    # pass 2. concatinate any commands we want to send to the synthesizer
+    seenText = 0
+    effects = []
+    text = ""
+
+    while (len(tokens) > 0):
+      item = tokens.pop(0)
+      print "processing item %s\n" %( item[0])
+      if item[0] == "text":
+        # track that we have already processed some text.
+        seenText = 1
+        text += item[1]
+      else:
+        params = item[1].split()
+        command = params.pop(0)
+        print "got command %s and %s \n" % (command, params)
+        if command in ["pbas", "volm", "pmod", "sync"]:
+          print "Native command %s appending to text\n" % command
+          seenText = 1
+          text += " [[%s]] " % item[1]
+          print "text now %s\n" % text
+        # A custom command
+        elif command in ["echo", "reverb", "flanger"]:
+          # if we have already seen text then it must get queued at this point as we have reached a command requiring a textclip
+          if seenText:
+            q.append(("textclip", ProcessSpecialCharacters(text), effects))
+            text = ""
+            seenText = 0
+            # fixme bart: resetting effects here is wrong.  They should be cumulative but it's too late in the day to even try and think about that right now.
+            effects = []
+          effects.append((command, params))
+        elif command == "voice":
+          # if we have already seen text then it must get queued at this point as we are about to queue a voice command
+          if seenText:
+            q.append(("textclip", ProcessSpecialCharacters(text), effects))
+            text = ""
+            seenText = 0
+          # fixme bart: need to do more voice processing to correct name here.
+          q.append(("voice", params[0]))
+        else:
+          writeDebugLog(4, "Error: unknown command %s\n" % command)
+
+          # Clean up any text that hasn't been queued when we fell off the end of the loop 
+    if seenText:
+      q.append(("textclip", ProcessSpecialCharacters(text), effects))
+      speechQueue.extend(q)
+    print "finished. q %s\n" % q
+  # def handleQueue(self, args):
+  #   if re.search(r"^(.*)(\[\[voice [a-z]*\]\])(.*)$", args):
+  #     queueTextWithVoiceCommands(args)
+  #   else:
+  #     self.queueContinuationValue = self.queueContinuationValue + args
+  #     if args.endswith('}'):
+  #       speechQueue.append(('textclip', self.queueContinuationValue))
+  #       self.queueContinuationValue = ""
+  #       self.isQueueContinuation = False
+  #     else:
+  #       self.isQueueContinuation = True
+
+
 
   def handleStopSpeaking(self, args):
     speechSynthesizer.stopSpeaking()
@@ -447,50 +527,6 @@ class _ProtocolHandler:
 ProtocolHandler = _ProtocolHandler()
 
 
-# This takes a string with embedded voice changes and splits it up and queues individual text events with voice changes inbetween.
-def queueTextWithVoiceCommands(text):
-  writeDebugLog(4, "process text with voice commands")
-  while text:
-    # try cleaning out the extra spaces
-    text = text.strip("{} ")
-    matcher = re.match(r"^(?P<first>.*?)\[\[voice (?P<voice>[a-z]*)\]\](?P<rest>.*)$", text)
-    if not matcher:
-      writeDebugLog(8, "no match in string " + text + "\n")
-      break
-    first = matcher.group('first')
-    voice = matcher.group('voice')
-    rest = matcher.group('rest')
-    if first:
-      speechQueue.append(("textclip", first))
-    speechQueue.append(('voice', voice))
-    writeDebugLog(8, "first: " + first + "\nvoice " + voice + "\nrest " + rest)
-    text = rest
-  if text:
-    writeDebugLog(8, "queueing final chunk " + text)
-    speechQueue.append(('textclip', text))
-
-
-
-def queueTextWithSoxCommands(text):
-  writeDebugLog(4, "process text with voice commands")
-  while text:
-    # try cleaning out the extra spaces
-    text = text.strip("{} ")
-    matcher = re.match(r"^(?P<first>.*?)\[\[voice (?P<voice>[a-z]*)\]\](?P<rest>.*)$", text)
-    if not matcher:
-      writeDebugLog(8, "no match in string " + text + "\n")
-      break
-    first = matcher.group('first')
-    voice = matcher.group('voice')
-    rest = matcher.group('rest')
-    if first:
-      speechQueue.append(('text', first))
-    speechQueue.append(('voice', voice))
-    writeDebugLog(8, "first: " + first + "\nvoice " + voice + "\nrest " + rest)
-    text = rest
-  if text:
-    writeDebugLog(8, "queueing final chunk " + text)
-    speechQueue.append(('text', text))
 
 
 # Processes speech objects.
@@ -542,23 +578,9 @@ def processSpeechQueue():
 
 def ProcessSpecialCharacters(wordList):
   punctList = punctuationMap[ttsState['punctuationLevel']]
-  # used to track if we are currently inside an embedded command.
-  inEmbeddedCommand = 0
 
   expansion = ""
   for i in range(len(wordList)):
-    # Check if we are entering an embedded command
-    if wordList[i] == '[' and wordList[i - 1] == '[':
-      inEmbeddedCommand = 1
-    # Check if we are leaving an embedded command
-    if wordList[i] == ']' and wordList[i - 1] == ']':
-      inEmbeddedCommand = 0
-
-    # if we are in an embedded command then just send the char straight through with out processing
-    if inEmbeddedCommand:
-      expansion += (wordList[i])
-      continue
-
     # Check if we have an expansion for this char
     if wordList[i] in punctList:
       expansion += ' ' + (punctuationNamesMap[wordList[i]]) + ' '
@@ -568,7 +590,6 @@ def ProcessSpecialCharacters(wordList):
     if ttsState['capitalize'] and re.match(r"^[A-Z]+$", wordList[i]):
       expansion += "[[sync 3]]"
     expansion += (wordList[i])
-
   return expansion
 
 def main():
