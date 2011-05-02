@@ -106,23 +106,13 @@ speechQueue = []
 # Lock access to specific speech synthesis paths.
 speechLock = threading.Lock()
 
-
-"""
-  Helper for consuming callbacks from NSSound.
-"""
-class TextClipPlayerDelegate(NSObject):
-
-  def sound_didFinishPlaying_(self, textClipPlayer, success):
-    processSpeechQueue()
-
-textClipPlayer = NSSound.alloc()
-textClipPlayerDelegate_ = TextClipPlayerDelegate.alloc().init();
-textClipPlayer.setDelegate_(textClipPlayerDelegate_)
-
 """
   Helper for consuming callbacks from NSSpeechSynthesizer.
 """
 class SpeechSynthesizerDelegate(NSObject):
+
+  def sound_didFinishPlaying_(self, textClipPlayer, success):
+    processSpeechQueue()
 
   def speechSynthesizer_didFinishSpeaking_(self, synthesizer, success):
     processSpeechQueue()
@@ -142,6 +132,11 @@ speechSynthesizer = NSSpeechSynthesizer.alloc().init()
 delegate_ = SpeechSynthesizerDelegate.alloc().init();
 speechSynthesizer.setRate_(ttsState['speechRate'])
 speechSynthesizer.setDelegate_(delegate_)
+
+textClipPlayer = NSSound.alloc()
+textClipPlayerDelegate_ = SpeechSynthesizerDelegate.alloc().init();
+textClipPlayer.setDelegate_(textClipPlayerDelegate_)
+
 
 """
   An object which observes stdin.
