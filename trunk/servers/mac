@@ -96,10 +96,15 @@ speechLock = threading.Lock()
 
 
 """
-  Helper for consuming callbacks from NSSpeechSynthesizer.
+  Helper for consuming callbacks from NSSound and NSSpeechSynthesizer.
+Implements NSSoundDelegate and NSSpeechSynthesizerDelegate protocol's.
 """
-class SpeechSynthesizerDelegate(NSObject):
+class ServerDelegate(NSObject):
+  # NSSoundDelegate implementation.
+  def sound_didFinishPlaying_(self, textClipPlayer, success):
+    processSpeechQueue()
 
+  # NSSpeechSynthesizerDelegate implementation.
   def speechSynthesizer_didFinishSpeaking_(self, synthesizer, success):
     processSpeechQueue()
 
@@ -115,9 +120,12 @@ class SpeechSynthesizerDelegate(NSObject):
 
 # Static.
 speechSynthesizer = NSSpeechSynthesizer.alloc().init()
-delegate_ = SpeechSynthesizerDelegate.alloc().init();
+speechDelegate = ServerDelegate.alloc().init()
 speechSynthesizer.setRate_(ttsState['speechRate'])
-speechSynthesizer.setDelegate_(delegate_)
+speechSynthesizer.setDelegate_(speechDelegate)
+textClipPlayer = NSSound.alloc()
+textClipPlayerDelegate = ServerDelegate.alloc().init()
+textClipPlayer.setDelegate_(textClipPlayerDelegate)
 
 """
   An object which observes stdin.
@@ -281,6 +289,7 @@ class _ProtocolHandler:
 
   def handleStopSpeaking(self, args):
     speechSynthesizer.stopSpeaking()
+    textClipPlayer.stop()
     del(speechQueue[:])
 
   def handleTone(self, args):
@@ -440,7 +449,7 @@ def queueTextWithVoiceCommands(text):
 def processSpeechQueue():
   # hacky way to work around buggy NSSpeechSynthesizerDelegate
   speechLock.acquire()
-  if speechSynthesizer.isSpeaking():
+  if speechSynthesizer.isSpeaking() or textClipPlayer.isPlaying():
     speechLock.release()
     return
   speechLock.release()
