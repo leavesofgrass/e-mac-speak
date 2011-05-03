@@ -56,7 +56,7 @@
 ;;}}}
 ;;{{{  voice table
 
-(defvar mac-default-voice-string "[[voice alex]]"
+(defvar mac-default-voice-string "{{voice alex}}"
   "Default Mac tag for  default voice.")
 
 (defvar mac-voice-table (make-hash-table)
@@ -95,15 +95,15 @@ COMMAND-STRING to the TTS engine."
 ;;{{{ voice definitions
 
 ;;; the nine predefined voices: TODO: figure out if embedding is possible (and update voice names).
-(mac-define-voice 'paul  " [[voice alex]] ")
-(mac-define-voice 'harry " [[voice ralf]] ")
-(mac-define-voice 'dennis " [[voice bruce]] ")
-(mac-define-voice 'frank " [[voice fred]] ")
-(mac-define-voice 'betty " [[voice victoria]] ")
-(mac-define-voice 'ursula " [[voice kathy]] ")
-(mac-define-voice 'rita " [[voice vicki]] ")
-(mac-define-voice 'wendy " [[voice kathy]] ")
-(mac-define-voice 'kit " [[voice junior]] ")
+(mac-define-voice 'paul  "<<voice alex>>")
+(mac-define-voice 'harry " <<voice ralf>> ")
+(mac-define-voice 'dennis "<<voice bruce>>")
+(mac-define-voice 'frank "<<voice fred>>")
+(mac-define-voice 'betty "<<voice victoria>>")
+(mac-define-voice 'ursula "<<voice kathy>>")
+(mac-define-voice 'rita "<<voice vicki>>")
+(mac-define-voice 'wendy "<<voice kathy>>")
+(mac-define-voice 'kit "<<voice junior>>")
 
 ;;; Modified voices:
 
@@ -299,19 +299,19 @@ and TABLE gives the values along that dimension."
     (lambda (setting)
       (aset table
             (first setting)
-            (format " [[volm %s]] "
+            (format "<<reverb %s>>"
                     (second setting)))))
    '(
-     (0 0.3)
-     (1 0.40 )
-     (2  0.50)
-     (3  0.55)
-     (4  0.60 )
-     (5  0.70 )
-     (6  0.75)
-     (7  0.8)
-     (8  0.9)
-     (9  1.0)))
+     (0 0)
+     (1 10)
+     (2  20)
+     (3  30)
+     (4  40)
+     (5  50)
+     (6  60)
+     (7  70)
+     (8  80)
+     (9  90)))
   (mac-css-set-code-table 'paul 'stress table ))
 
 (let ((table (make-vector 10 "")))
