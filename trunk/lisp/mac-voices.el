@@ -299,16 +299,15 @@ and TABLE gives the values along that dimension."
     (lambda (setting)
       (aset table
             (first setting)
-            (format "<<phaser %s %s %s %s %s %s>>"
+            (format "<<phaser %s %s %s %s %s>>"
                     (second setting)
 		    (third setting)
 		    (fourth setting)
 		    (fifth setting)
 		    (sixth setting)
-		    (seventh setting)
 ))))
    '(
-     (0 1 .5 0 0 0)
+     (0 1 .5 0.1 0.1 0.1)
      (1 1 .5 1 .1 .04)
      (2  1 .5 1.5 .2 .06)
      (3  1 .5 2 .3 .08)
