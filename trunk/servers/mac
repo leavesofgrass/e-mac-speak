@@ -39,6 +39,9 @@ if debugLevel > 0:
                                           mode='w',
                                           prefix='emacspeak.servers.mac_log')
 
+  # Insecure version; used for easier debugging.
+  DEBUGFILE = open('/tmp/speech.log', 'w')
+
 # global speech rate
 ttsState['speechRate'] = 500
 ttsState['charFactor'] = 1.8
@@ -540,8 +543,8 @@ def main():
     AppHelper.runConsoleEventLoop()
   except KeyboardInterrupt:
     writeDebugLog(2, "\nKeyboard interrupt")
-  #except Exception, err:
-    #writeDebugLog(2, "Server crashed:%s" % err)
+  except Exception, err:
+    writeDebugLog(2, "Server crashed:%s" % err)
 
 if __name__ == '__main__':
   main()
