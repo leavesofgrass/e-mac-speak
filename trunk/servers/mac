@@ -19,6 +19,7 @@ from PyObjCTools import AppHelper
 from AppKit import NSObject
 from AppKit import NSSound
 from AppKit import NSSpeechSynthesizer
+from AppKit import NSURL
 
 # Globals.
 ttsState = {}
@@ -130,6 +131,8 @@ speechSynthesizer.setDelegate_(speechDelegate)
 textClipPlayer = NSSound.alloc()
 textClipPlayerDelegate = ServerDelegate.alloc().init()
 textClipPlayer.setDelegate_(textClipPlayerDelegate)
+speechOutPathString = '/tmp/speechOut.aiff'
+speechOutUrl = NSURL.alloc().initWithString_(speechOutPathString)
 
 """
   An object which observes stdin.
@@ -464,8 +467,8 @@ def preprocessCustomEmbeds(text):
   if text:
     writeDebugLog(8, "queueing final chunk " + text)
     if len(effects) > 0:
-      writeDebugLog(8, "Appending textclip")
-      speechQueue.append(("textclip", (effects, first)))
+      writeDebugLog(8, "Appending textclip" + str(effects))
+      speechQueue.append(("textclip", (effects, text)))
     else:
       writeDebugLog(8, "Appending text")
       speechQueue.append(("text", text))
@@ -484,6 +487,7 @@ def processSpeechQueue():
 
   if (len(speechQueue) > 0):
     item = speechQueue.pop(0)
+
     #Text
     if item[0] == "text":
       #Basic processing.  TODO: refactor.
@@ -495,6 +499,8 @@ def processSpeechQueue():
         writeDebugLog(2, "\nsay: " + item[1] + "\nend\n")
       else:
         processSpeechQueue()
+
+    # Voice changes
     elif item[0] == "voice":
       writeDebugLog(4, "Voice change")
       voice = item[1]
@@ -502,6 +508,18 @@ def processSpeechQueue():
         speechSynthesizer.setVoice_(voiceMap[voice])
         writeDebugLog(6, "set voice to " + voiceMap[voice])  
         processSpeechQueue()
+
+    # Custom embeds.
+    elif item[0] == 'textclip':
+      writeDebugLog(4, "rendering text clip" + str(item))
+      speechQueue.insert(0, (('playclip', (item[1])[0])))
+      speechSynthesizer.startSpeakingString_toURL_(
+(item[1])[1], speechOutUrl)
+
+    # Plays text clip (with possibly sox processing).
+    elif item[0] == 'playclip':
+      textClipPlayer.initWithContentsOfFile_byReference_(
+speechOutPathString, False).play()
 
 
 def ProcessSpecialCharacters(wordList):
