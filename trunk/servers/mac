@@ -423,11 +423,12 @@ ProtocolHandler = _ProtocolHandler()
 def preprocessCustomEmbeds(text):
   writeDebugLog(4, "preprocess custom embeds.")
   effects = []
+  text.strip(' {}')
 
   # The following uses a car/cdr pattern.
   # Since we don't know if the car is a text or embedded command, we try both.
   while text:
-    matcher = re.match(r"^(?P<first>.*?)\<\<(?P<customembed>.*)\>\>(?P<rest>.*)$", text)
+    matcher = re.match(r"(?P<first>[^\<\>]*)(\<\<(?P<customembed>[a-zA-Z0-9 ]*)\>\>)(?P<rest>.*)$", text)
     if not matcher:
       writeDebugLog(8, "no match in string " + text + "\n")
       break
@@ -441,7 +442,7 @@ def preprocessCustomEmbeds(text):
     elif first:
       speechQueue.append(('text', first))
     writeDebugLog(
-        8, "first: " + first + "\neffects " + str(effects) + "\nrest " + rest)
+        8, "first: " + str(first) + "\neffects " + str(effects) + "\nrest " + str(rest))
 
     if embed:
       embedArgs = embed.split(' ')
@@ -452,7 +453,10 @@ def preprocessCustomEmbeds(text):
       else:
         effects.append(embedArgs)
 
-    text = rest
+    if rest:
+      text = rest
+    else:
+      text = ""
 
   if text:
     writeDebugLog(8, "queueing final chunk " + text)
@@ -536,8 +540,8 @@ def main():
     AppHelper.runConsoleEventLoop()
   except KeyboardInterrupt:
     writeDebugLog(2, "\nKeyboard interrupt")
-  except Exception, err:
-    writeDebugLog(2, "Server crashed:%s" % err)
+  #except Exception, err:
+    #writeDebugLog(2, "Server crashed:%s" % err)
 
 if __name__ == '__main__':
   main()
