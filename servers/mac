@@ -524,8 +524,8 @@ def processSpeechQueue():
       outStream = pysox.CSoxStream(
 '/tmp/soxSpeechOut.aiff', 'w', inStream.get_signal(), fileType='wav')
       chain = pysox.CEffectsChain(inStream, outStream)
-      # Only handles one effect/one arg.
-      chain.add_effect(pysox.CEffect(effectArgs[0], [effectArgs[1]]))
+      effectName = effectArgs.pop(0)
+      chain.add_effect(pysox.CEffect(effectName, effectArgs))
       chain.flow_effects()
       inStream.close()
       outStream.close()
