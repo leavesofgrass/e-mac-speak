@@ -7,6 +7,7 @@
 import aifc
 import math
 import os
+import pysox
 import re
 import StringIO
 import sys
@@ -276,16 +277,13 @@ class _ProtocolHandler:
     speechSynthesizer.startSpeakingString_(output)
 
   def handleQueue(self, args):
-    if re.search(r"^(.*)(\[\[voice [a-z]*\]\])(.*)$", args):
-      queueTextWithVoiceCommands(args)
+    self.queueContinuationValue = self.queueContinuationValue + args
+    if args.endswith('}'):
+      preprocessCustomEmbeds(self.queueContinuationValue)
+      self.queueContinuationValue = ""
+      self.isQueueContinuation = False
     else:
-      self.queueContinuationValue = self.queueContinuationValue + args
-      if args.endswith('}'):
-        speechQueue.append(("text", self.queueContinuationValue))
-        self.queueContinuationValue = ""
-        self.isQueueContinuation = False
-      else:
-        self.isQueueContinuation = True
+      self.isQueueContinuation = True
 
   def handleStopSpeaking(self, args):
     speechSynthesizer.stopSpeaking()
@@ -420,27 +418,50 @@ class _ProtocolHandler:
 ProtocolHandler = _ProtocolHandler()
 
 
-# This takes a string with embedded voice changes and splits it up and queues individual text events with voice changes inbetween.
-def queueTextWithVoiceCommands(text):
-  writeDebugLog(4, "process text with voice commands")
+# This takes a string with embedded voice changes and
+# splits it up and queues individual text events with voice changes inbetween.
+def preprocessCustomEmbeds(text):
+  writeDebugLog(4, "preprocess custom embeds.")
+  effects = []
+
+  # The following uses a car/cdr pattern.
+  # Since we don't know if the car is a text or embedded command, we try both.
   while text:
-    # try cleaning out the extra spaces
-    text = text.strip("{} ")
-    matcher = re.match(r"^(?P<first>.*?)\[\[voice (?P<voice>[a-z]*)\]\](?P<rest>.*)$", text)
+    matcher = re.match(r"^(?P<first>.*?)\<\<(?P<customembed>.*)\>\>(?P<rest>.*)$", text)
     if not matcher:
       writeDebugLog(8, "no match in string " + text + "\n")
       break
+
     first = matcher.group('first')
-    voice = matcher.group('voice')
+    embed = matcher.group('customembed')
     rest = matcher.group('rest')
-    if first:
-      speechQueue.append(("text", first))
-    speechQueue.append(("voice", voice))
-    writeDebugLog(8, "first: " + first + "\nvoice " + voice + "\nrest " + rest)
+
+    if first and len(effects) > 0:
+      speechQueue.append(("textclip", (effects, first)))
+    elif first:
+      speechQueue.append(('text', first))
+    writeDebugLog(
+        8, "first: " + first + "\neffects " + str(effects) + "\nrest " + rest)
+
+    if embed:
+      embedArgs = embed.split(' ')
+      # Special case voice changes.
+      if embedArgs[0] == 'voice':
+        writeDebugLog(4, 'queueing voice change: ' + str(embedArgs))
+        speechQueue.append(('voice', embedArgs[1]))
+      else:
+        effects.append(embedArgs)
+
     text = rest
+
   if text:
     writeDebugLog(8, "queueing final chunk " + text)
-    speechQueue.append(("text", text))
+    if len(effects) > 0:
+      writeDebugLog(8, "Appending textclip")
+      speechQueue.append(("textclip", (effects, first)))
+    else:
+      writeDebugLog(8, "Appending text")
+      speechQueue.append(("text", text))
 
 
 # Processes speech objects.
