@@ -527,6 +527,8 @@ def processSpeechQueue():
       # Only handles one effect/one arg.
       chain.add_effect(pysox.CEffect(effectArgs[0], [effectArgs[1]]))
       chain.flow_effects()
+      inStream.close()
+      outStream.close()
       textClipPlayer.initWithContentsOfFile_byReference_(
 '/tmp/soxSpeechOut.aiff', False).play()
 
