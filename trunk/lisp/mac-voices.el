@@ -56,7 +56,7 @@
 ;;}}}
 ;;{{{  voice table
 
-(defvar mac-default-voice-string "{{voice alex}}"
+(defvar mac-default-voice-string "<<voice alex>>"
   "Default Mac tag for  default voice.")
 
 (defvar mac-voice-table (make-hash-table)
