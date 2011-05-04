@@ -72,6 +72,7 @@ punctuationNamesMap= {'$':'dollar',
                  '+':'plus',
                  '=':'equals',
                  '\'':'apostrophe',
+                      '*':'star',
                  '~':'tilda',
                  '`':'backquote',
                  '!':'exclamation',
@@ -83,7 +84,7 @@ punctuationNamesMap= {'$':'dollar',
 
 punctuationMap = {'none': ('$'),
                   'some': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '~', '`', '!'),
-                  'all': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '\'', '~', '`', '!', '@', '_', '\'', '.', ',')}
+                  'all': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '\'', '~', '`', '!', '@', '_', '\'', '*', '.', ',')}
 
 # map voice short names to apple class names.
 voiceMap= {'alex':'com.apple.speech.synthesis.voice.Alex',
