@@ -6,6 +6,7 @@
 
 import aifc
 import math
+import mmap
 import os
 import pysox
 import re
@@ -134,6 +135,8 @@ textClipPlayerDelegate = ServerDelegate.alloc().init()
 textClipPlayer.setDelegate_(textClipPlayerDelegate)
 speechOutPathString = '/tmp/speechOut.aiff'
 speechOutUrl = NSURL.alloc().initWithString_(speechOutPathString)
+speechOutMapFile = mmap.mmap(os.open(speechOutPathString, os.O_RDWR), 0)
+soxSpeechOutMapFile = mmap.mmap(os.open('/tmp/soxSpeechOut.aiff', os.O_RDWR), 0)
 
 """
   An object which observes stdin.
