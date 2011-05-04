@@ -76,12 +76,13 @@ punctuationNamesMap= {'$':'dollar',
                  '!':'exclamation',
                  '@':'at',
                  '_':'underline',
+                 '\'':'apostrophe',
                  '.':'dot',
                  ',':'comma'}
 
 punctuationMap = {'none': ('$'),
                   'some': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '~', '`', '!'),
-                  'all': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '\'', '~', '`', '!', '@', '_', '.', ',')}
+                  'all': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '\'', '~', '`', '!', '@', '_', '\'', '.', ',')}
 
 # map voice short names to apple class names.
 voiceMap= {'alex':'com.apple.speech.synthesis.voice.Alex',
@@ -511,14 +512,18 @@ def processSpeechQueue():
 
     # Custom embeds.
     elif item[0] == 'textclip':
-      writeDebugLog(4, "rendering text clip" + str(item))
       # This is totally repetitive with above.
       output = (item[1])[1]
       output = ProcessSpecialCharacters(output)
+      output = output.strip(' ')
+      if not output:
+        processSpeechQueue()
+        return
+      writeDebugLog(4, "rendering text clip" + str(output))
       speechSynthesizer.setRate_(ttsState['speechRate'])
-      speechQueue.insert(0, (('playclip', (item[1])[0])))
-      speechSynthesizer.startSpeakingString_toURL_(
-output, speechOutUrl)
+      if speechSynthesizer.startSpeakingString_toURL_(
+output, speechOutUrl):
+        speechQueue.insert(0, (('playclip', (item[1])[0])))
 
     # Plays text clip (with possibly sox processing).
     elif item[0] == 'playclip':
