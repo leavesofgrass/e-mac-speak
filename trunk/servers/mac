@@ -569,6 +569,8 @@ def ProcessSpecialCharacters(wordList):
     if wordList[i] in punctList:
       expansion += ' ' + (punctuationNamesMap[wordList[i]]) + ' '
       continue
+    elif wordList[i] in punctuationMap['all']:
+      continue
 
     # if we have a cap letter
     if ttsState['capitalize'] and re.match(r"^[A-Z]+$", wordList[i]):
