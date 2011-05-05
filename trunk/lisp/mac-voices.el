@@ -56,7 +56,7 @@
 ;;}}}
 ;;{{{  voice table
 
-(defvar mac-default-voice-string "<<voice alex>>"
+(defvar mac-default-voice-string "[{voice alex}]"
   "Default Mac tag for  default voice.")
 
 (defvar mac-voice-table (make-hash-table)
@@ -95,22 +95,22 @@ COMMAND-STRING to the TTS engine."
 ;;{{{ voice definitions
 
 ;;; the nine predefined voices: TODO: figure out if embedding is possible (and update voice names).
-(mac-define-voice 'paul  "<<voice alex>>")
-(mac-define-voice 'harry " <<voice ralf>> ")
-(mac-define-voice 'dennis "<<voice bruce>>")
-(mac-define-voice 'frank "<<voice fred>>")
-(mac-define-voice 'betty "<<voice victoria>>")
-(mac-define-voice 'ursula "<<voice kathy>>")
-(mac-define-voice 'rita "<<voice vicki>>")
-(mac-define-voice 'wendy "<<voice kathy>>")
-(mac-define-voice 'kit "<<voice junior>>")
+(mac-define-voice 'paul  " [{voice alex}] ")
+(mac-define-voice 'harry " [{voice ralf}] ")
+(mac-define-voice 'dennis " [{voice bruce}] ")
+(mac-define-voice 'frank " [{voice fred}] ")
+(mac-define-voice 'betty " [{voice victoria}] ")
+(mac-define-voice 'ursula " [{voice kathy}] ")
+(mac-define-voice 'rita " [{voice vicki}] ")
+(mac-define-voice 'wendy " [{voice kathy}] ")
+(mac-define-voice 'kit " [{voice junior}] ")
 
 ;;; Modified voices:
 
 ;;}}}
 ;;{{{  the inaudible voice
 
-;;; TVR: Achieve this by setting volume to 0?
+;;; Achieve this by setting volume to 0?
 (mac-define-voice 'inaudible " [[volm 0]] ")
 
 ;;}}}
@@ -149,7 +149,7 @@ and TABLE gives the values along that dimension."
 
 (defvar mac-gain-table (make-vector  10 "")
   "Maps CSS volume settings to actual synthesizer codes.")
-
+;; TODO
 ;;}}}
 ;;{{{  average pitch
 
@@ -299,7 +299,7 @@ and TABLE gives the values along that dimension."
     (lambda (setting)
       (aset table
             (first setting)
-            (format "<<echo %s %s %s %s>>"
+            (format " [{echo %s %s %s %s}] "
                     (second setting)
 		    (third setting)
 		    (fourth setting)
