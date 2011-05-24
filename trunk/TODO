@@ -5,6 +5,7 @@
 - Decide which punctuation characters to include in none, some, and all levels.
 - Upper case pitch adjustment needs to reset pitch for subsequent lower
 case letters. Perhaps the server needs to keep some state (i.e. current pitch).
+- It appears that in punctuation mode none that all punct is stripped out and thus results in strange word pronunciation e.g. i'll becomes ill and numbers with decimal points run together.  Not sure about the correct fix for this ATM.
 
 * Missing features
 - all caps mode
