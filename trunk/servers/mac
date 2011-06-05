@@ -531,7 +531,7 @@ output, speechOutUrl):
 
     # Plays text clip (with possibly sox processing).
     elif item[0] == 'playclip':
-      effectArgs = (item[1])[0]
+      effectArgs = (item[1]).pop(0)
       writeDebugLog(4, "about to play clip with effects: " + str(effectArgs))
       inStream = pysox.CSoxStream(speechOutPathString)
       outStream = pysox.CSoxStream(
