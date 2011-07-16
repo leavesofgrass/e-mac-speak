@@ -22,6 +22,7 @@ from AppKit import NSSound
 from AppKit import NSSpeechSynthesizer
 from AppKit import NSURL
 
+
 # Globals.
 ttsState = {}
 
@@ -134,6 +135,8 @@ speechSynthesizer.setDelegate_(speechDelegate)
 textClipPlayer = NSSound.alloc()
 textClipPlayerDelegate = ServerDelegate.alloc().init()
 textClipPlayer.setDelegate_(textClipPlayerDelegate)
+open("/tmp/speechOut.aiff", "w").write("0")
+open("/tmp/soxSpeechOut.aiff", "w").write("0")
 speechOutPathString = '/tmp/speechOut.aiff'
 speechOutUrl = NSURL.alloc().initWithString_(speechOutPathString)
 speechOutMapFile = mmap.mmap(os.open(speechOutPathString, os.O_RDWR), 0)
