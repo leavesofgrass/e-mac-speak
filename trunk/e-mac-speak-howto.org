@@ -130,7 +130,46 @@ To get emacs to start up loading emacspeak with the e-mac-speak server place the
 
 This is the minimum required to ensure that emacspeak comes up talking.  You will want to investigate further customizations of both emacs and emacspeak as you progress.
 
+You will also want to ajust the paths to reflect where you installed emacspeak.
+
+(setq load-path (cons "~/src/emacspeak/lisp" load-path))
+(setq emacspeak-directory "~/src/emacspeak")
+(setq dtk-program "mac")
+(load-file "~/src/emacspeak/lisp/mac-voices.el")
+(setq mac-default-speech-rate 500)
+(load-file "~/src/emacspeak/lisp/emacspeak-setup.el")
+
+
 A good place to look for emacspeak customizations is in the "tvr" directory of the emacspeak source.  This is Raman's emacs customizations.
 
 
 fixme
+* pysox
+
+To compile pysox you will need the sox headers and libraries installed.  They can be installed with:
+brew install sox
+
+You can download the pysox package from:
+http://pypi.python.org/pypi/pysox
+
+I have found it does not build cleanly for me.
+
+This is how I got it built and installed.
+
+First I run:
+python setup.py build
+as per the README.
+
+This will fail.
+I then took the two build lines and ran them by hand.  On each line I removed the --arch i386.
+
+So the two build lines I ended up with were:
+llvm-gcc-4.2 -fno-strict-aliasing -fno-common -dynamic -g -Os -pipe -fno-common -fno-strict-aliasing -fwrapv -mno-fused-madd -DENABLE_DTRACE -DMACOSX -DNDEBUG -Wall -Wstrict-prototypes -Wshorten-64-to-32 -DNDEBUG -g -fwrapv -Os -Wall -Wstrict-prototypes -DENABLE_DTRACE -arch x86_64 -pipe -I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 -c pysox/combiner.c -o build/temp.macosx-10.7-intel-2.7/pysox/combiner.o
+llvm-gcc-4.2 -Wl,-F. -bundle -undefined dynamic_lookup -Wl,-F. -arch x86_64 build/temp.macosx-10.7-intel-2.7/pysox/combiner.o -lsox -o build/lib.macosx-10.7-intel-2.7/pysox/combiner.so
+
+After running these two commands I then was able to run the build again:
+
+python setup.py build
+Then to install 
+python setup.py install
+
