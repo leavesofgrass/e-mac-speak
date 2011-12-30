@@ -132,7 +132,7 @@ speechSynthesizer = NSSpeechSynthesizer.alloc().init()
 speechDelegate = ServerDelegate.alloc().init()
 speechSynthesizer.setRate_(ttsState['speechRate'])
 speechSynthesizer.setDelegate_(speechDelegate)
-textClipPlayer = NSSound.alloc()
+textClipPlayer = NSSound.alloc().retain()
 textClipPlayerDelegate = ServerDelegate.alloc().init()
 textClipPlayer.setDelegate_(textClipPlayerDelegate)
 open("/tmp/speechOut.aiff", "w").write("0")
@@ -573,6 +573,7 @@ def ProcessSpecialCharacters(wordList):
       expansion += ' ' + (punctuationNamesMap[wordList[i]]) + ' '
       continue
     elif wordList[i] in punctuationMap['all']:
+      expansion += ' '
       continue
 
     # if we have a cap letter
