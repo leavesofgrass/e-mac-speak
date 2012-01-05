@@ -87,6 +87,9 @@ punctuationMap = {'none': ('$'),
                   'some': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '~', '`', '!'),
                   'all': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '\'', '~', '`', '!', '@', '_', '\'', '*', '.', ',')}
 
+# Do not filter on some or none punctuation.
+literalPunctuation = ["'"]
+
 # map voice short names to apple class names.
 voiceMap= {'alex':'com.apple.speech.synthesis.voice.Alex',
            'victoria':'com.apple.speech.synthesis.voice.Victoria',
@@ -578,7 +581,7 @@ def ProcessSpecialCharacters(wordList):
     if wordList[i] in punctList:
       expansion += ' ' + (punctuationNamesMap[wordList[i]]) + ' '
       continue
-    elif wordList[i] in punctuationMap['all']:
+    elif wordList[i] in punctuationMap['all'] and not wordList[i] in literalPunctuation:
       expansion += ' '
       continue
 
