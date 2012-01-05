@@ -268,8 +268,8 @@ class _ProtocolHandler:
   def handleLetter(self, args):
     output = args.strip(" }")
 
-    prefix = "[[rate " + str(ttsState['sayRate']) + "]]"
-    suffix = "[[rate " + str(ttsState['speechRate']) + "]]"
+    prefix = "[[rate " + str(ttsState['sayRate']) + "]] [[char ltrl]] "
+    suffix = "[[rate " + str(ttsState['speechRate']) + "]] [[char norm]]"
 
     writeDebugLog(4, "Letter: " + output + "\n")
     self.handleStopSpeaking(None)
@@ -454,6 +454,9 @@ def preprocessCustomEmbeds(text):
     if first and len(effects) > 0:
       speechQueue.append(("textclip", (effects, first)))
     elif first:
+      while len(first) > 1024:
+        speechQueue.append(('text', first[:1024]))
+        first = first[1024:]
       speechQueue.append(('text', first))
     writeDebugLog(
         8, "first: " + str(first) + "\neffects " + str(effects) + "\nrest " + str(rest))
@@ -479,6 +482,9 @@ def preprocessCustomEmbeds(text):
       speechQueue.append(("textclip", (effects, text)))
     else:
       writeDebugLog(8, "Appending text")
+      while len(text) > 1024:
+        speechQueue.append(("text", text[:1024]))
+        text = text[1024:]
       speechQueue.append(("text", text))
 
 
