@@ -11,7 +11,7 @@ case letters. Perhaps the server needs to keep some state (i.e. current pitch).
 Is the culprit– at the time there are two echo commands in the queue and somehow it is popping the effect name off the second one such that when we go to process it the effect name is '1'.
 q { [[pbas 55]]  [[pmod 98.7]]  [{echo 1 1 60 0.3}]   [[pbas 10]]  [[pmod 84.6]]  [{echo 1 1 60 0.3}] jrollins@finestructure.net  [{voice alex}] }
 d
-- Turning niumbers into words ignores leading 0s.  Thus something like 0123456 gives no indication of the leading 0.
+- Turning numbers into words ignores leading 0s.  Thus something like 0123456 gives no indication of the leading 0.
 
 
 
