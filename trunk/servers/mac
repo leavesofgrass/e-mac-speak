@@ -336,11 +336,6 @@ class _ProtocolHandler:
     writeDebugLog(4, "Letter: " + output + "\n")
     self.handleStopSpeaking(None)
 
-    # punctuation processing, we want to speak all punctuation if it is a single letter so just match against the punctuationNamesMap
-    if output in punctuationNamesMap:
-      output = punctuationNamesMap[output]
-      writeDebugLog(8, "punctuationNamesMap match, output now: " + output + "\n")  
-
     # Check if this is a capital
     if re.match(r"^[A-Z]+$", output):
       prefix = prefix + " [[pbas +" + str(capsPitchIncrease) + "]]"
