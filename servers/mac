@@ -654,6 +654,9 @@ def ProcessSpecialCharacters(wordList):
   return expansion
 
 
+
+#* Numbers to words
+
 def ExpandNumbers(text):
   writeDebugLog(4, "Expand numbers")
   expanded_text = ""
@@ -667,7 +670,7 @@ def ExpandNumbers(text):
     first = matcher.group('first')
     number = matcher.group('number')
     rest = matcher.group('rest')
-    expanded_text += first + num2eng(int(number))
+    expanded_text += first + " " + num2eng(int(number)) + " "
 
     writeDebugLog(8, "first: " + first + "\nnumber " + number + "\nrest " + rest)
     text = rest
@@ -744,6 +747,8 @@ def num2eng(num):
     return ' '.join(pron)
 
 
+
+#* Main
 
 def main():
   speechSynthesizer.startSpeakingString_("E Mac Speak server")
