@@ -641,7 +641,7 @@ def ProcessSpecialCharacters(wordList):
       expansion += ' ' + (punctuationNamesMap[wordList[i]]) + ' '
       continue
     elif wordList[i] in punctuationMap['all'] and not wordList[i] in literalPunctuation:
-      expansion += ' '
+      expansion += wordList[i] + ' '
       continue
 
     # if we have a cap letter
