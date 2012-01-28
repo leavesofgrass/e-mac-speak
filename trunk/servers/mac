@@ -67,7 +67,7 @@ punctuationNamesMap= {'$':'dollar',
                  ':':'colon',
                  '<':'less than',
                  '>':'greater than',
-                 '\n':'new line',
+                 '\n':'',
                  '\\':'backslash',
                  '/':'slash',
                  '+':'plus',
@@ -428,7 +428,7 @@ class _ProtocolHandler:
         continue
 
       if self.isQueueContinuation:
-        self.handleQueue(chunk)
+        self.handleQueue("\n" + chunk)
         continue
 
       # Extract protocol id and protocol args.
