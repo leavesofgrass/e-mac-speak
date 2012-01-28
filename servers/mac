@@ -88,7 +88,7 @@ punctuationMap = {'none': ('$'),
                   'all': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '\'', '~', '`', '!', '@', '_', '\'', '*', '.', ',')}
 
 # Do not filter on some or none punctuation.
-literalPunctuation = ["'"]
+literalPunctuation = ["'", ","]
 
 # map voice short names to apple class names.
 voiceMap= {'alex':'com.apple.speech.synthesis.voice.Alex',
@@ -613,10 +613,8 @@ output, speechOutUrl):
 
 
 def Clean(text):
-
-  text = ExpandNumbers(text)
   text = ProcessSpecialCharacters(text)
-
+  text = ExpandNumbers(text)
   return text
 
 def ProcessSpecialCharacters(wordList):
@@ -670,7 +668,9 @@ def ExpandNumbers(text):
     first = matcher.group('first')
     number = matcher.group('number')
     rest = matcher.group('rest')
-    expanded_text += first + " " + num2eng(int(number)) + " "
+    if first.endswith(',') or rest.startswith(','):
+      break
+    expanded_text += first + " " + num2eng(number) + " "
 
     writeDebugLog(8, "first: " + first + "\nnumber " + number + "\nrest " + rest)
     text = rest
@@ -725,7 +725,21 @@ def small2eng(num):
 # do we want to add last 'and'?
 def num2eng(num):
     '''English representation of a number'''
-    num = str(long(num)) # Convert to string, throw if bad number
+    # TODO: Try this strategy; revert r116 if it doesn't work well.
+    # No preprocessing necessary.
+    if len(num) <= 3 or "," in num:
+      return num
+    else:
+      processed = ""
+      i = len(num)
+      while (i >= 0):
+        if i > 3:
+          processed = "," + num[i - 3:i] + processed
+        else:
+          processed = num[0:i] + processed
+          return processed
+        i -= 3
+
     if (len(num) / 3 >= len(_PRONOUNCE)): # Sanity check
         raise ValueError('Number too big')
 
@@ -754,12 +768,12 @@ def main():
   speechSynthesizer.startSpeakingString_("E Mac Speak server")
   observer = FileObserver.alloc().initWithFileDescriptor_readCallback_errorCallback_(
         sys.stdin.fileno(), gotLine, gotError)
-  try:
-    AppHelper.runConsoleEventLoop()
-  except KeyboardInterrupt:
-    writeDebugLog(2, "\nKeyboard interrupt")
-  except Exception, err:
-    writeDebugLog(2, "Server crashed:%s" % err)
+#  try:
+  AppHelper.runConsoleEventLoop()
+#  except KeyboardInterrupt:
+#    writeDebugLog(2, "\nKeyboard interrupt")
+#  except Exception, err:
+#    writeDebugLog(2, "Server crashed:%s" % err)
 
 if __name__ == '__main__':
   main()
