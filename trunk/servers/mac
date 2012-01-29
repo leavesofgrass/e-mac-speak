@@ -31,7 +31,7 @@ capsPitchIncrease = 8
 
 # Debug level
 # 0 means no debug output is written 10 is maximum output
-debugLevel = 0
+debugLevel = 10
 
 # Should debug output also be written to STDOUT?
 debugToSTDOUT = 1
@@ -88,7 +88,7 @@ punctuationMap = {'none': ('$'),
                   'all': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '\'', '~', '`', '!', '@', '_', '\'', '*', '.', ',')}
 
 # Blacklist these characters for audio clip rendering as they cause crashes.
-renderingBlacklist = ['*', '(', ')', '\n']
+renderingBlacklist = ['*', '(', ')', '\n', '/']
 
 # Do not filter on some or none punctuation.
 literalPunctuation = ["'", ","]
