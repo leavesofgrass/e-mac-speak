@@ -499,7 +499,7 @@ def preprocessCustomEmbeds(text):
   # The following uses a car/cdr pattern.
   # Since we don't know if the car is a text or embedded command, we try both.
   while text:
-    matcher = re.match(r"(?P<first>(^.*?))\[\{(?P<customembed>[a-zA-Z0-9 \.-]*?)\}\](?P<rest>.*?)$", text)
+    matcher = re.match(r"(?P<first>(^(.|\n)*?))\[\{(?P<customembed>[a-zA-Z0-9 \.-]*?)\}\](?P<rest>(.|\n)*?)$", text)
     if not matcher:
       writeDebugLog(8, "no match in string " + text + "\n")
       break
@@ -768,12 +768,12 @@ def main():
   speechSynthesizer.startSpeakingString_("E Mac Speak server")
   observer = FileObserver.alloc().initWithFileDescriptor_readCallback_errorCallback_(
         sys.stdin.fileno(), gotLine, gotError)
-#  try:
-  AppHelper.runConsoleEventLoop()
-#  except KeyboardInterrupt:
-#    writeDebugLog(2, "\nKeyboard interrupt")
-#  except Exception, err:
-#    writeDebugLog(2, "Server crashed:%s" % err)
+  try:
+    AppHelper.runConsoleEventLoop()
+  except KeyboardInterrupt:
+    writeDebugLog(2, "\nKeyboard interrupt")
+  except Exception, err:
+    writeDebugLog(2, "Server crashed:%s" % err)
 
 if __name__ == '__main__':
   main()
