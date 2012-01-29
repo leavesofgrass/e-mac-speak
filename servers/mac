@@ -613,8 +613,8 @@ output, speechOutUrl):
 
 
 def Clean(text):
-  text = ProcessSpecialCharacters(text)
   text = ExpandNumbers(text)
+  text = ProcessSpecialCharacters(text)
   return text
 
 def ProcessSpecialCharacters(wordList):
