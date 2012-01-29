@@ -632,8 +632,8 @@ output, speechOutUrl) and output not in renderingBlacklist:
 
 
 def Clean(text):
-  text = ExpandNumbers(text)
   text = ProcessSpecialCharacters(text)
+  text = ExpandNumbers(text)
   return text
 
 def ProcessSpecialCharacters(wordList):
