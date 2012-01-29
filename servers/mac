@@ -31,7 +31,7 @@ capsPitchIncrease = 8
 
 # Debug level
 # 0 means no debug output is written 10 is maximum output
-debugLevel = 10
+debugLevel = 0
 
 # Should debug output also be written to STDOUT?
 debugToSTDOUT = 1
@@ -88,7 +88,7 @@ punctuationMap = {'none': ('$'),
                   'all': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '\'', '~', '`', '!', '@', '_', '\'', '*', '.', ',')}
 
 # Blacklist these characters for audio clip rendering as they cause crashes.
-renderingBlacklist = ['*', '(', ')']
+renderingBlacklist = ['*', '(', ')', '\n']
 
 # Do not filter on some or none punctuation.
 literalPunctuation = ["'", ","]
@@ -746,7 +746,7 @@ def num2eng(num):
     '''English representation of a number'''
     # TODO: Try this strategy; revert r116 if it doesn't work well.
     # No preprocessing necessary.
-    if len(num) <= 3 or "," in num:
+    if len(num) <= 6 or "," in num:
       return num
     else:
       processed = ""
