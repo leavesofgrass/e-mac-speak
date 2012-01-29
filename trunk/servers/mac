@@ -83,9 +83,12 @@ punctuationNamesMap= {'$':'dollar',
                  '.':'dot',
                  ',':'comma'}
 
-punctuationMap = {'none': ('$', '*'),
+punctuationMap = {'none': ('$'),
                   'some': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '~', '`', '!'),
                   'all': ('$', '#', '-', '"', '(', ')', '*', ';', ':', '<', '>', '\n', '\\', '/', '+', '=', '\'', '~', '`', '!', '@', '_', '\'', '*', '.', ',')}
+
+# Blacklist these characters for audio clip rendering as they cause crashes.
+renderingBlacklist = ['*', '(', ')']
 
 # Do not filter on some or none punctuation.
 literalPunctuation = ["'", ","]
@@ -592,7 +595,7 @@ def processSpeechQueue():
       writeDebugLog(4, "rendering text clip" + str(output))
       speechSynthesizer.setRate_(ttsState['speechRate'])
       if speechSynthesizer.startSpeakingString_toURL_(
-output, speechOutUrl):
+output, speechOutUrl) and output not in renderingBlacklist:
         speechQueue.insert(0, (('playclip', (item[1])[0])))
 
     # Plays text clip (with possibly sox processing).
