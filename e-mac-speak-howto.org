@@ -100,6 +100,20 @@ make config
 make emacspeak
 
 
+* E-Mac-Speak server prerequisites
+
+You will need to install sox and the pysox library.  These are used to provide extra filters on the tts.  As the set of parameters  available with mac tts engines is limited.
+
+Feedback on this process is most welcome as it's written from memory.
+
+To install sox:
+brew install sox
+
+To install pysox:
+sudo easy_install pyrex
+sudo easy_install pysox
+
+
 * Test the e-mac-speak server
 
 Before trying to run emacspeak itself we need to verify that the e-mac-speak server is working.
