@@ -335,6 +335,7 @@ class _ProtocolHandler:
     e.close()
 
   def handleTtsSay(self, args):
+    self.handleStopSpeaking(None)
     speechSynthesizer.startSpeakingString_('[[rate %i]] %s' % (ttsState['sayRate'], args))
 
   def handleTtsSelftest(self, args):
