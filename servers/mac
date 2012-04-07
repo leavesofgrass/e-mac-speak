@@ -522,7 +522,7 @@ def preprocessCustomEmbeds(text):
 def processSpeechQueue():
   # hacky way to work around buggy NSSpeechSynthesizerDelegate
   speechLock.acquire()
-  if speechSynthesizer.isSpeaking() or textClipPlayer.isPlaying():
+  if NSSpeechSynthesizer.isAnyApplicationSpeaking() or textClipPlayer.isPlaying():
     speechLock.release()
     return
   speechLock.release()
