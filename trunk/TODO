@@ -5,13 +5,13 @@
 - Decide which punctuation characters to include in none, some, and all levels.
 - Upper case pitch adjustment needs to reset pitch for subsequent lower
 case letters. Perhaps the server needs to keep some state (i.e. current pitch).
-- It appears that in punctuation mode none that all punct is stripped out and thus results in strange word pronunciation e.g. i'll becomes ill and numbers with decimal points run together.  Not sure about the correct fix for this ATM.
+
 - The following sequence crashes the server.  it appears that line 540
       effectName = effectArgs.pop(0)
 Is the culprit– at the time there are two echo commands in the queue and somehow it is popping the effect name off the second one such that when we go to process it the effect name is '1'.
 q { [[pbas 55]]  [[pmod 98.7]]  [{echo 1 1 60 0.3}]   [[pbas 10]]  [[pmod 84.6]]  [{echo 1 1 60 0.3}] jrollins@finestructure.net  [{voice alex}] }
 d
-- Turning numbers into words ignores leading 0s.  Thus something like 0123456 gives no indication of the leading 0.
+
 
 
 
@@ -92,3 +92,5 @@ set state to looking for command
 - When large chunks of text are sent to the server it becomes unresponsive.  For example if you do a "svn log" in the shell for this project, things lock up for some time.
 - Sometimes chunks of text are lost.  Haven't been able to create a reproduceable case yet.
 - issueing the emacspeak-speak-time command (bound to c-e t) quickly results in the year spoken again and again.  expected behaviour is that the currently speaking time is interupdated and speaking starts from the time again.  You need to hit this combo rather quickly again and again to see this.  Suspect this is exposing an underlieing  issue of some sort.
+- numbers now read properly as english even with leading zeros.
+- in lower punctuation levels, we insert spaces for punctuations we would normally expand for except for "literal" punctuation such as comma and "'".
