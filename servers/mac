@@ -8,7 +8,6 @@ import aifc
 import math
 import mmap
 import os
-import pysox
 import re
 import StringIO
 import subprocess
@@ -25,6 +24,13 @@ from AppKit import NSURL
 
 
 # Globals.
+enableSox = False
+try:
+  import pysox
+  enableSox &= True
+except:
+  enableSox = False
+
 ttsState = {}
 
 # amount to increase pitch of capital letters.  This may need tweaking. 
@@ -572,9 +578,12 @@ def processSpeechQueue():
         return
       writeDebugLog(4, "rendering text clip" + str(output))
       speechSynthesizer.setRate_(ttsState['speechRate'])
-      if speechSynthesizer.startSpeakingString_toURL_(
+      if not enableSox:
+        speechSynthesizer.startSpeakingString_(output)
+      else:
+        if speechSynthesizer.startSpeakingString_toURL_(
 output, speechOutUrl) and output not in renderingBlacklist:
-        speechQueue.insert(0, (('playclip', (item[1])[0])))
+          speechQueue.insert(0, (('playclip', (item[1])[0])))
 
     # Plays text clip (with possibly sox processing).
     elif item[0] == 'playclip':
