@@ -4,17 +4,17 @@
 # author: David Tseng
 # author: Bart Bunting
 
+import StringIO
 import aifc
 import math
 import mmap
 import os
+import platform
 import re
-import StringIO
 import subprocess
 import sys
 import tempfile
 import threading
-import platform
 
 from Foundation import *
 from PyObjCTools import AppHelper
@@ -34,8 +34,6 @@ except:
 
 # Detect OSX version for use in conditional code
 osx_version, _, _ = platform.mac_ver()
-osx_version = float('.'.join(osx_version.split('.')[:2]))
-print osx_version
 
 ttsState = {}
 
@@ -529,18 +527,12 @@ def preprocessCustomEmbeds(text):
 #  format is:
 #  { type, value }
 def processSpeechQueue():
-  # hacky way to work around buggy NSSpeechSynthesizerDelegate
-  if (osx_version < 10.9):
-    writeDebugLog(4, "Aquiring speech lock as OSX version < 10.9")
+  if (osx_version < "10.9"):
+    # hacky way to work around buggy NSSpeechSynthesizerDelegate
     speechLock.acquire()
-  #if NSSpeechSynthesizer.isAnyApplicationSpeaking() or textClipPlayer.isPlaying():
-  if speechSynthesizer.isSpeaking() or textClipPlayer.isPlaying():
-    if (osx_version < 10.9):
-      writeDebugLog(4, "Releasing speech lock as OSX version < 10.9")
+    if speechSynthesizer.isSpeaking() or textClipPlayer.isPlaying():
       speechLock.release()
-    return
-  if (osx_version < 10.9):
-    writeDebugLog(4, "Releasing speech lock as OSX version < 10.9")
+      return
     speechLock.release()
 
   if (len(speechQueue) > 0):
