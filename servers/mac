@@ -34,6 +34,7 @@ except:
 
 # Detect OSX version for use in conditional code
 osx_version, _, _ = platform.mac_ver()
+osx_version = int(osx_version.split(".")[1])
 
 ttsState = {}
 
@@ -527,7 +528,7 @@ def preprocessCustomEmbeds(text):
 #  format is:
 #  { type, value }
 def processSpeechQueue():
-  if (osx_version < "10.9"):
+  if (osx_version < 9):
     # hacky way to work around buggy NSSpeechSynthesizerDelegate
     speechLock.acquire()
     if speechSynthesizer.isSpeaking() or textClipPlayer.isPlaying():
