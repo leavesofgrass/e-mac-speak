@@ -258,6 +258,7 @@ class _ProtocolHandler:
     # Maps a protocol id to a handler function.
     self.protocolIdToHandlerMap = { 'd':self.handleDispatch,
                                     'a':self.handleAuditoryIcon,
+                                    'c':self.handleQueue,
                                     'l':self.handleLetter,
                                     'q':self.handleQueue,
                                     's':self.handleStopSpeaking,
