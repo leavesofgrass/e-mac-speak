@@ -1,0 +1,1 @@
+This is an attempt to unify efforts towrds a stable version of Emacspeak on Mac OS X.  The goal is two fold -- show VoiceOver users the power and capabilities offered by Emacspeak and contribute back upstream to the Emacspeak repo.
